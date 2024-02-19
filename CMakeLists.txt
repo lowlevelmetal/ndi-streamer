@@ -11,11 +11,14 @@ message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 # Find NDI SDK
 find_package(NDISDK REQUIRED)
 
+# Find FFMPEG
+find_package(FFMPEG REQUIRED)
+
 # Include NDI SDK headers
-include_directories(${NDI_INCLUDE_DIR})
+include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 
 # Add executable
 add_executable(ndistreamer src/ndi-streamer.cpp)
 
 # Link NDI SDK library
-target_link_libraries(ndistreamer ${NDI_LIB})
+target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
