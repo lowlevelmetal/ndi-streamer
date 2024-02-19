@@ -7,6 +7,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
 message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 
+# Set debug flags
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -D_DEBUG")
 
 # Find NDI SDK
 find_package(NDISDK REQUIRED)
@@ -17,8 +19,11 @@ find_package(FFMPEG REQUIRED)
 # Include NDI SDK headers
 include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 
-# Add executable
-add_executable(ndistreamer src/ndi-streamer.cpp)
-
-# Link NDI SDK library
-target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
+# Set executable name
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_executable(ndistreamer_debug src/ndi-streamer.cpp)
+    target_link_libraries(ndistreamer_debug ${NDI_LIB} ${FFMPEG_LIBRARIES})
+else()
+    add_executable(ndistreamer src/ndi-streamer.cpp)
+    target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
+endif()
