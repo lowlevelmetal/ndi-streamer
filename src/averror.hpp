@@ -28,7 +28,10 @@ namespace AV {
         PacketAlloc,
         PacketsClaimed,
         FrameRead,
-        NullPointer
+        NullPointer,
+        PacketSend,
+        RecieveFrame,
+        NotVideoFrame
     };
 
     std::string AvErrorStr(AvErrorCode &err);

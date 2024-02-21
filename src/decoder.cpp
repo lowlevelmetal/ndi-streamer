@@ -13,6 +13,8 @@
 #include "decoder.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
+#include <asm-generic/errno-base.h>
+#include <libavcodec/avcodec.h>
 #include <libavcodec/packet.h>
 
 namespace AV {
@@ -129,24 +131,64 @@ namespace AV {
     }
 
     // Read next packet
-    AvErrorCode Decoder::ReadFrame(const AVFrame **frame) {        
+    AvErrorCode Decoder::ReadFrame() {        
         if(!m_fileopened)
             return AvErrorCode::FileNotOpened;
 
-        if(!frame)
-            return AvErrorCode::NullPointer;
-        
+        // clear packet before processing next one
+        av_packet_unref(m_ppacket);
+
+        // Fill packet with stream data
         int ret = av_read_frame(m_pformat_context, m_ppacket);
         if(ret < 0) {
             if (ret != AVERROR_EOF) {
                 ERROR("av_read_frame debug information --> 0x%04x,%d", ret, m_video_total_frames);
                 return AvErrorCode::FrameRead;
             }
-            
+
             return AvErrorCode::PacketsClaimed;
         }
 
         return AvErrorCode::NoError;
+    }
+
+    AvErrorCode Decoder::DecodeVideoPacket() {
+        if(!IsCurrentFrameVideo())
+                return AvErrorCode::NotVideoFrame;
+
+        int response;
+
+        if(!m_packet_in_decoder) {
+            // Load packet in decoder
+            response = avcodec_send_packet(m_pcodec_context, m_ppacket);
+            if(response < 0)
+                return AvErrorCode::PacketSend;
+
+            m_packet_in_decoder = true;
+        }
+
+        // Load frame with decoded packet
+        response = avcodec_receive_frame(m_pcodec_context, m_pframe);
+        if(response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+            m_packet_in_decoder = false;
+            return AvErrorCode::PacketsClaimed;
+        } else if (response < 0) {
+            m_packet_in_decoder = false;
+            return AvErrorCode::RecieveFrame;
+        }
+
+        return AvErrorCode::NoError;
+    }
+
+    int Decoder::GetFrameFormat() {
+        return m_pframe->format;
+    }
+
+    bool Decoder::IsCurrentFrameVideo() {
+        if(m_ppacket->stream_index == m_video_stream_index)
+            return true;
+
+        return false;
     }
 
     // Private member functions

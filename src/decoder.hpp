@@ -37,12 +37,16 @@ namespace AV {
             ~Decoder();
 
             AvErrorCode OpenFile(std::string &file);
-            AvErrorCode ReadFrame(const AVFrame **packet);
+            AvErrorCode ReadFrame();
+            AvErrorCode DecodeVideoPacket();
+            bool IsCurrentFrameVideo();
+            int GetFrameFormat();
 
         private:
             std::string m_file;
             bool m_Initialized = false;
             bool m_fileopened = false;
+            bool m_packet_in_decoder = false;
             AVFormatContext *m_pformat_context = nullptr;
             const AVCodec *m_pcodec = nullptr;
             AVCodecParameters *m_pcodec_parameters = nullptr;

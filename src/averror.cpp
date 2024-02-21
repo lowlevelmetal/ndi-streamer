@@ -42,6 +42,12 @@ namespace AV {
                 return std::string("Null pointer exception");
             case AvErrorCode::FrameRead:
                 return std::string("Frame read error");
+            case AvErrorCode::PacketSend:
+                return std::string("Failed to send raw packet to decoder");
+            case AvErrorCode::RecieveFrame:
+                return std::string("Failed to fill frame with decoded output");
+            case AvErrorCode::NotVideoFrame:
+                return std::string("Frame is not a video frame");
         }
 
         return std::string("Invalid AV error code");
