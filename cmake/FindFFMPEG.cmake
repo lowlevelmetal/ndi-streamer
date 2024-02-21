@@ -6,6 +6,8 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat
     libavutil
     libswscale
+    libavdevice
+    libavfilter
 )
 
 if (FFMPEG_FOUND)
