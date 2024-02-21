@@ -19,11 +19,17 @@ find_package(FFMPEG REQUIRED)
 # Include NDI SDK headers
 include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 
+# Define sources
+set(SOURCES
+    src/ndi-streamer.cpp
+    src/averror.cpp
+    src/decoder.cpp)
+
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_executable(ndistreamer_debug src/ndi-streamer.cpp)
+    add_executable(ndistreamer_debug ${SOURCES})
     target_link_libraries(ndistreamer_debug ${NDI_LIB} ${FFMPEG_LIBRARIES})
 else()
-    add_executable(ndistreamer src/ndi-streamer.cpp)
+    add_executable(ndistreamer ${SOURCES})
     target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
 endif()
