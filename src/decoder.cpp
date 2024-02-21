@@ -13,8 +13,7 @@
 #include "decoder.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
-#include <libavcodec/codec_par.h>
-#include <libavformat/avformat.h>
+#include <libavcodec/packet.h>
 
 namespace AV {
     Decoder::Decoder(std::string &file) : m_file(file) {
@@ -38,6 +37,18 @@ namespace AV {
         if(m_pformat_context) {
             avformat_close_input(&m_pformat_context);
             avformat_free_context(m_pformat_context);
+        }
+
+        if(m_pcodec_context) {
+            avcodec_free_context(&m_pcodec_context);
+        }
+
+        if(m_pframe) {
+            av_frame_free(&m_pframe);
+        }
+
+        if(m_ppacket) {
+            av_packet_free(&m_ppacket);
         }
     }
 
@@ -79,17 +90,61 @@ namespace AV {
             // This will not exit the loop, in the debug build we might want to
             // see debug information on the other streams
             if(pcodec_parameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-                DEBUG("Video codec detected");
                 if(m_video_stream_index == -1) {
+                    DEBUG("Stream selected");
                     m_video_stream_index = i; // Stream index
                     m_pcodec = pcodec; // Codec
                     m_pcodec_parameters = pcodec_parameters; // Codec information
+                    m_video_total_frames = m_pformat_context->streams[i]->nb_frames;
                 }  
             }
         }
 
         if(m_video_stream_index == -1)
             return AvErrorCode::StreamMissing;
+
+        // Allocate space for ffmpeg codec context
+        if(!(m_pcodec_context = avcodec_alloc_context3(m_pcodec)))
+            return AvErrorCode::CodecContext;
+
+        // Fill the new codec context with the selected codec parameters
+        if(avcodec_parameters_to_context(m_pcodec_context, m_pcodec_parameters) < 0)
+            return AvErrorCode::CodecParameters;
+
+        // Finish codec initialization
+        if(avcodec_open2(m_pcodec_context, m_pcodec, nullptr) < 0)
+            return AvErrorCode::CodecOpen;
+
+        // Allocate space for frame
+        if(!(m_pframe = av_frame_alloc()))
+            return AvErrorCode::FrameAlloc;
+
+        // Allocate space for packet
+        if(!(m_ppacket = av_packet_alloc()))
+            return AvErrorCode::PacketAlloc;
+
+        m_fileopened = true;
+
+        return AvErrorCode::NoError;
+    }
+
+    // Read next packet
+    AvErrorCode Decoder::ReadFrame(const AVFrame **frame) {        
+        if(!m_fileopened)
+            return AvErrorCode::FileNotOpened;
+
+        if(!frame)
+            return AvErrorCode::NullPointer;
+        
+        int ret = av_read_frame(m_pformat_context, m_ppacket);
+        if(ret < 0) {
+            if (ret != AVERROR_EOF) {
+                ERROR("av_read_frame debug information --> 0x%04x,%d", ret, m_video_total_frames);
+                return AvErrorCode::FrameRead;
+            }
+            
+            return AvErrorCode::PacketsClaimed;
+        }
 
         return AvErrorCode::NoError;
     }

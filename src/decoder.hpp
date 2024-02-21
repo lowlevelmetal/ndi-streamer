@@ -9,7 +9,6 @@
 #pragma once
 
 // Standard includes
-#include <libavcodec/codec_par.h>
 #include <string>
 
 // Local includes
@@ -23,6 +22,10 @@ extern "C" {
     #include <libavutil/time.h>
     #include <libswscale/swscale.h>
     #include <libavcodec/codec.h>
+    #include <libavcodec/codec_par.h>
+    #include <libavcodec/avcodec.h>
+    #include <libavutil/frame.h>
+    #include <libavcodec/packet.h>
 }
 
 namespace AV {
@@ -34,14 +37,20 @@ namespace AV {
             ~Decoder();
 
             AvErrorCode OpenFile(std::string &file);
+            AvErrorCode ReadFrame(const AVFrame **packet);
 
         private:
             std::string m_file;
             bool m_Initialized = false;
+            bool m_fileopened = false;
             AVFormatContext *m_pformat_context = nullptr;
             const AVCodec *m_pcodec = nullptr;
             AVCodecParameters *m_pcodec_parameters = nullptr;
+            AVCodecContext *m_pcodec_context = nullptr;
+            AVFrame *m_pframe = nullptr;
+            AVPacket *m_ppacket = nullptr;
             int m_video_stream_index = -1;
+            int m_video_total_frames = -1;
 
             void m_Initialize();
             void m_OpenFile(std::string &file);

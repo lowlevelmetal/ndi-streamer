@@ -16,10 +16,19 @@ namespace AV {
     enum class AvErrorCode {
         NoError,
         DecoderNotInitialized,
+        FileNotOpened,
         FormatContextAlloc,
         FormatHeader,
         FormatStreamInfo,
-        StreamMissing
+        StreamMissing,
+        CodecContext,
+        CodecParameters,
+        CodecOpen,
+        FrameAlloc,
+        PacketAlloc,
+        PacketsClaimed,
+        FrameRead,
+        NullPointer
     };
 
     std::string AvErrorStr(AvErrorCode &err);

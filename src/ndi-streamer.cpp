@@ -17,6 +17,7 @@
 #include <Processing.NDI.Lib.h>
 
 // Local includes
+#include "averror.hpp"
 #include "macro.hpp"
 #include "decoder.hpp"
 
@@ -62,6 +63,14 @@ int main(int argc, char** argv) {
         FATAL("Failed to process command line input");
 
     AV::Decoder decoder(cmdlineargs.videofile);
+    const AVFrame *packet;
+    AV::AvErrorCode ret;
+    while((ret = decoder.ReadFrame(&packet)) == AV::AvErrorCode::NoError) {
+        DEBUG("Packet read");
+    }
+
+    if(ret != AV::AvErrorCode::PacketsClaimed)
+        FATAL("%s", AV::AvErrorStr(ret).c_str());
 
     // Destroy NDIlib instance
     NDIlib_destroy();
