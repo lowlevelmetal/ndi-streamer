@@ -15,7 +15,8 @@ namespace AV {
 
     enum class NdiErrorCode {
         NoError,
-        SendCreate
+        SendCreate,
+        UnsupportedPixFormat
     };
 
     std::string NdiErrorStr(NdiErrorCode &err);

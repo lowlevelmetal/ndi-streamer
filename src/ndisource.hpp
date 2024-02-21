@@ -13,6 +13,7 @@
 
 // Local includes
 #include "ndi.hpp"
+#include "ndierror.hpp"
 
 namespace AV {
 
@@ -20,6 +21,8 @@ namespace AV {
         public:
             NdiSource(std::string &ndi_source_name);
             ~NdiSource();
+
+            NdiErrorCode SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data);
 
         private:
             NDIlib_send_instance_t m_pNDI_send;

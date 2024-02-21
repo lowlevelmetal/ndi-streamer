@@ -9,8 +9,10 @@
 // local includes
 #include "ndisource.hpp"
 #include "Processing.NDI.Send.h"
+#include "Processing.NDI.structs.h"
 #include "ndierror.hpp"
 #include "macro.hpp"
+#include "decoder.hpp"
 
 namespace AV {
     NdiSource::NdiSource(std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {
@@ -24,6 +26,30 @@ namespace AV {
     NdiSource::~NdiSource() {
         if(m_initialized)
             NDIlib_send_destroy(m_pNDI_send);
+    }
+
+    NdiErrorCode NdiSource::SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data) {
+        NDIlib_video_frame_v2_t video_frame;
+
+        switch(pixel_format) {
+            case AV_PIX_FMT_YUV420P:
+                video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+                break;
+            default:
+                return NdiErrorCode::UnsupportedPixFormat;
+        }
+
+        video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+        video_frame.p_data = video_data;
+        video_frame.line_stride_in_bytes = stride;
+        video_frame.xres = width;
+        video_frame.yres = height;
+        video_frame.frame_rate_N = fr_num;
+        video_frame.frame_rate_D = fr_den;
+
+        NDIlib_send_send_video_v2(m_pNDI_send, &video_frame);
+
+        return NdiErrorCode::NoError;
     }
 
     void NdiSource::m_Initialize() {

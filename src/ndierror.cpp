@@ -17,6 +17,8 @@ namespace AV {
                 return std::string("No ndi error");
             case NdiErrorCode::SendCreate:
                 return std::string("Failed to create NDI send instance");
+            case NdiErrorCode::UnsupportedPixFormat:
+                return std::string("Unsupported pixel format");
         }
 
         return std::string("Invalid NDI error code");

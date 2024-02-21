@@ -180,8 +180,26 @@ namespace AV {
         return AvErrorCode::NoError;
     }
 
+    void Decoder::GetPacketDimensions(int *resx, int *resy) {
+        *resx = m_pcodec_context->width;
+        *resy = m_pcodec_context->height;
+    }
+
+    void Decoder::GetPacketFrameRate(int *num, int *den) {
+        *num = m_pcodec_context->framerate.num;
+        *den = m_pcodec_context->framerate.den;
+    }
+
+    int Decoder::GetPacketStride() {
+        return m_pframe->linesize[0];
+    }
+
     int Decoder::GetFrameFormat() {
         return m_pframe->format;
+    }
+
+    uint8_t *Decoder::GetPacketData() {
+        return m_pframe->data[0];
     }
 
     bool Decoder::IsCurrentFrameVideo() {

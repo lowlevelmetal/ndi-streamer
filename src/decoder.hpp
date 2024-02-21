@@ -41,6 +41,10 @@ namespace AV {
             AvErrorCode DecodeVideoPacket();
             bool IsCurrentFrameVideo();
             int GetFrameFormat();
+            void GetPacketDimensions(int *resx, int *resy);
+            void GetPacketFrameRate(int *num, int *den);
+            int GetPacketStride();
+            uint8_t *GetPacketData();
 
         private:
             std::string m_file;

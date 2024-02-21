@@ -17,6 +17,7 @@
 #include "averror.hpp"
 #include "macro.hpp"
 #include "decoder.hpp"
+#include "ndierror.hpp"
 #include "ndisource.hpp"
 
 typedef struct CommandLineArguments {
@@ -81,6 +82,21 @@ int main(int argc, char** argv) {
                     default:
                         FATAL("Unsupported format --> 0x%04x", format);
                 }
+
+                int resx, resy;
+                int fr_num, fr_den;
+
+                decoder.GetPacketDimensions(&resx, &resy);
+                decoder.GetPacketFrameRate(&fr_num, &fr_den);
+
+                auto ndiret = ndisrc.SendPacket(format,
+                    resx, resy,
+                    fr_num, fr_den,
+                    decoder.GetPacketStride(),
+                    decoder.GetPacketData());
+
+                if(ndiret != AV::NdiErrorCode::NoError)
+                    FATAL("%s", AV::NdiErrorStr(ndiret).c_str());
 
                 decoder_count++;
             }
