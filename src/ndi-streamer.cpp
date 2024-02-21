@@ -8,8 +8,6 @@
 
 // Standard library
 #include <cstdlib>
-#include <libavcodec/codec.h>
-#include <libavcodec/codec_par.h>
 #include <string>
 
 // POSIX includes
@@ -27,6 +25,7 @@ extern "C" {
     #include <libavutil/imgutils.h>
     #include <libavutil/time.h>
     #include <libswscale/swscale.h>
+    #include <libavcodec/codec.h>
 }
 
 typedef struct CommandLineArguments {
