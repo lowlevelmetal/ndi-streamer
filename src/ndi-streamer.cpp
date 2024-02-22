@@ -89,14 +89,21 @@ int main(int argc, char** argv) {
                 decoder.GetPacketDimensions(&resx, &resy);
                 decoder.GetPacketFrameRate(&fr_num, &fr_den);
 
+                uint8_t *converted_buffer = decoder.ConvertToUVYV();
+                if(!converted_buffer) {
+                    FATAL("Failed to create UVYV buffer");
+                }
+
                 auto ndiret = ndisrc.SendPacket(format,
                     resx, resy,
                     fr_num, fr_den,
-                    decoder.GetPacketStride(),
-                    decoder.GetPacketData());
+                    decoder.GetUVYVPacketStride(),
+                    converted_buffer);
 
                 if(ndiret != AV::NdiErrorCode::NoError)
                     FATAL("%s", AV::NdiErrorStr(ndiret).c_str());
+
+                av_free(converted_buffer);
 
                 decoder_count++;
             }

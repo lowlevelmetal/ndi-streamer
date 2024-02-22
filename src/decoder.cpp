@@ -16,6 +16,9 @@
 #include <asm-generic/errno-base.h>
 #include <libavcodec/avcodec.h>
 #include <libavcodec/packet.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/pixfmt.h>
+#include <libswscale/swscale.h>
 
 namespace AV {
     Decoder::Decoder(std::string &file) : m_file(file) {
@@ -47,6 +50,10 @@ namespace AV {
 
         if(m_pframe) {
             av_frame_free(&m_pframe);
+        }
+
+        if(m_puyvy_frame) {
+            av_frame_free(&m_puyvy_frame);
         }
 
         if(m_ppacket) {
@@ -121,6 +128,9 @@ namespace AV {
         if(!(m_pframe = av_frame_alloc()))
             return AvErrorCode::FrameAlloc;
 
+        if(!(m_puyvy_frame = av_frame_alloc()))
+            return AvErrorCode::FrameAlloc;
+
         // Allocate space for packet
         if(!(m_ppacket = av_packet_alloc()))
             return AvErrorCode::PacketAlloc;
@@ -180,6 +190,33 @@ namespace AV {
         return AvErrorCode::NoError;
     }
 
+    uint8_t *Decoder::ConvertToUVYV() {
+        // Create frame buffer
+        int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_UYVY422, m_pcodec_context->width, m_pcodec_context->height, 1);
+        uint8_t *frame_buffer = (uint8_t *)av_malloc(buffer_size);
+        if(frame_buffer == nullptr) {
+            ERROR("Failed to create frame buffer");
+            return nullptr;
+        }
+
+        struct SwsContext *sws_context = sws_getContext(m_pcodec_context->width, m_pcodec_context->height,
+            m_pcodec_context->pix_fmt, m_pcodec_context->width, m_pcodec_context->height, AV_PIX_FMT_UYVY422,
+            SWS_BICUBIC, nullptr, nullptr, nullptr);
+        if(sws_context == nullptr) {
+            ERROR("Failed to create sws context");
+            return nullptr;
+        }
+
+        // Convert frame to UYVY format
+        av_image_fill_arrays(m_puyvy_frame->data, m_puyvy_frame->linesize, frame_buffer, AV_PIX_FMT_UYVY422,
+                                  m_pcodec_context->width, m_pcodec_context->height, 1);
+
+        sws_scale(sws_context, m_pframe->data, m_pframe->linesize, 0, m_pcodec_context->height,
+            m_puyvy_frame->data, m_puyvy_frame->linesize);
+
+        return frame_buffer;
+    }
+
     void Decoder::GetPacketDimensions(int *resx, int *resy) {
         *resx = m_pcodec_context->width;
         *resy = m_pcodec_context->height;
@@ -192,6 +229,10 @@ namespace AV {
 
     int Decoder::GetPacketStride() {
         return m_pframe->linesize[0];
+    }
+
+    int Decoder::GetUVYVPacketStride() {
+        return m_puyvy_frame->linesize[0];
     }
 
     int Decoder::GetFrameFormat() {

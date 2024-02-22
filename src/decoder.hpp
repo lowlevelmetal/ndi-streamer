@@ -44,7 +44,9 @@ namespace AV {
             void GetPacketDimensions(int *resx, int *resy);
             void GetPacketFrameRate(int *num, int *den);
             int GetPacketStride();
+            int GetUVYVPacketStride();
             uint8_t *GetPacketData();
+            uint8_t *ConvertToUVYV();
 
         private:
             std::string m_file;
@@ -56,6 +58,7 @@ namespace AV {
             AVCodecParameters *m_pcodec_parameters = nullptr;
             AVCodecContext *m_pcodec_context = nullptr;
             AVFrame *m_pframe = nullptr;
+            AVFrame *m_puyvy_frame = nullptr;
             AVPacket *m_ppacket = nullptr;
             int m_video_stream_index = -1;
             int m_video_total_frames = -1;
