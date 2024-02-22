@@ -214,6 +214,9 @@ namespace AV {
         sws_scale(sws_context, m_pframe->data, m_pframe->linesize, 0, m_pcodec_context->height,
             m_puyvy_frame->data, m_puyvy_frame->linesize);
 
+        // Free sws context
+        sws_freeContext(sws_context);
+
         return frame_buffer;
     }
 
