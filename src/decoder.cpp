@@ -199,6 +199,7 @@ namespace AV {
             return nullptr;
         }
 
+        // Setup SWS context to convert formats
         struct SwsContext *sws_context = sws_getContext(m_pcodec_context->width, m_pcodec_context->height,
             m_pcodec_context->pix_fmt, m_pcodec_context->width, m_pcodec_context->height, AV_PIX_FMT_UYVY422,
             SWS_BICUBIC, nullptr, nullptr, nullptr);
@@ -207,10 +208,14 @@ namespace AV {
             return nullptr;
         }
 
-        // Convert frame to UYVY format
-        av_image_fill_arrays(m_puyvy_frame->data, m_puyvy_frame->linesize, frame_buffer, AV_PIX_FMT_UYVY422,
-                                  m_pcodec_context->width, m_pcodec_context->height, 1);
+        // Setup data pointers and line sizes
+        if(av_image_fill_arrays(m_puyvy_frame->data, m_puyvy_frame->linesize, frame_buffer, AV_PIX_FMT_UYVY422,
+                                  m_pcodec_context->width, m_pcodec_context->height, 1) < 0) {
+            ERROR("Failed to av_image_fill_arrays");
+            return nullptr;
+        }
 
+        // Scale and convert
         sws_scale(sws_context, m_pframe->data, m_pframe->linesize, 0, m_pcodec_context->height,
             m_puyvy_frame->data, m_puyvy_frame->linesize);
 

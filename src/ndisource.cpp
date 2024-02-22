@@ -32,14 +32,16 @@ namespace AV {
     NdiErrorCode NdiSource::SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data) {
         NDIlib_video_frame_v2_t video_frame;
 
+        // Verify supported formats
         switch(pixel_format) {
-            case AV_PIX_FMT_YUV420P:
+            case AV_PIX_FMT_UYVY422:
                 video_frame.FourCC = NDIlib_FourCC_type_UYVY;
                 break;
             default:
                 return NdiErrorCode::UnsupportedPixFormat;
         }
 
+        // Create NDI packet
         video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
         video_frame.p_data = video_data;
         video_frame.line_stride_in_bytes = stride;
@@ -54,6 +56,7 @@ namespace AV {
                 "\tfr_num --> %d\n"
                 "\tfr_den --> %d\n", width, height, stride, fr_num, fr_den);
 
+        // Send out packet on network
         NDIlib_send_send_video_v2(m_pNDI_send, &video_frame);
 
         return NdiErrorCode::NoError;

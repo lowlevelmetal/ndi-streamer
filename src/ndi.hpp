@@ -14,6 +14,7 @@
 // NDI SDK
 #include <Processing.NDI.Lib.h>
 
+// This class is only used to handle initializing and deinitializing the NDI sdk
 namespace AV {
 
     class Ndi {

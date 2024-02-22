@@ -8,6 +8,7 @@
 
 // Standard library
 #include <cstdlib>
+#include <libavutil/pixfmt.h>
 #include <string>
 
 // POSIX includes
@@ -61,26 +62,29 @@ int main(int argc, char** argv) {
     if(ParseCommandLineArguments(cmdlineargs, argc, argv) == FAILED)
         FATAL("Failed to process command line input");
 
+    // Create NDI server
     AV::NdiSource ndisrc(cmdlineargs.ndisource);
+    
+    // Create libav decoder
     AV::Decoder decoder(cmdlineargs.videofile);
 
     int total_frames = 0;
     AV::AvErrorCode ret;
-    while((ret = decoder.ReadFrame()) == AV::AvErrorCode::NoError) {
-        if(decoder.IsCurrentFrameVideo()) {
+    while((ret = decoder.ReadFrame()) == AV::AvErrorCode::NoError) { // Read a frame
+        if(decoder.IsCurrentFrameVideo()) { // If the frame is a video
             DEBUG("Processing Video Frame --> %d", total_frames);
 
             int decoder_count = 0;
-            while((ret = decoder.DecodeVideoPacket()) == AV::AvErrorCode::NoError) {
+            while((ret = decoder.DecodeVideoPacket()) == AV::AvErrorCode::NoError) { // Start decoding packets in frames
                 DEBUG("Packet Decoded --> %d", decoder_count);
 
-                int format = decoder.GetFrameFormat();
-                switch (format) {
-                    case AV_PIX_FMT_YUV420P:
-                        DEBUG("Sending YUV420P packet");
-                        break;
-                    default:
-                        FATAL("Unsupported format --> 0x%04x", format);
+                // Convert pixel format to UVYV
+                //
+                // YUV420p is very commonly used in mpeg4 files
+                // which is not explicitly supported by NDI
+                uint8_t *converted_buffer = decoder.ConvertToUVYV();
+                if(!converted_buffer) {
+                    FATAL("Failed to create UVYV buffer");
                 }
 
                 int resx, resy;
@@ -89,12 +93,8 @@ int main(int argc, char** argv) {
                 decoder.GetPacketDimensions(&resx, &resy);
                 decoder.GetPacketFrameRate(&fr_num, &fr_den);
 
-                uint8_t *converted_buffer = decoder.ConvertToUVYV();
-                if(!converted_buffer) {
-                    FATAL("Failed to create UVYV buffer");
-                }
-
-                auto ndiret = ndisrc.SendPacket(format,
+                // Send an NDI video packet out on the network
+                auto ndiret = ndisrc.SendPacket(AV_PIX_FMT_UYVY422,
                     resx, resy,
                     fr_num, fr_den,
                     decoder.GetUVYVPacketStride(),
@@ -103,6 +103,8 @@ int main(int argc, char** argv) {
                 if(ndiret != AV::NdiErrorCode::NoError)
                     FATAL("%s", AV::NdiErrorStr(ndiret).c_str());
 
+                // We need to manually free the av_buffer that was
+                // created by ConvertToUVYV
                 av_free(converted_buffer);
 
                 decoder_count++;
