@@ -47,6 +47,12 @@ namespace AV {
         video_frame.frame_rate_N = fr_num;
         video_frame.frame_rate_D = fr_den;
 
+        DEBUG("\n\tWidth --> %d\n"
+                "\tHeight --> %d\n"
+                "\tStride --> %d\n"
+                "\tfr_num --> %d\n"
+                "\tfr_den --> %d\n", width, height, stride, fr_num, fr_den);
+
         NDIlib_send_send_video_v2(m_pNDI_send, &video_frame);
 
         return NdiErrorCode::NoError;
