@@ -43,3 +43,7 @@ This will generate the executable in your build directory
     -s "NDI Source Name"
 ```
 
+## Mission
+
+Develop a lightweight, versatile tool capable of decoding both audio and video content, with potential cross-platform functionality, enabling seamless streaming via NDI.
+
