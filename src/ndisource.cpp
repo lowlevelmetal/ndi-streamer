@@ -13,7 +13,6 @@
 #include "ndierror.hpp"
 #include "macro.hpp"
 #include "decoder.hpp"
-#include <libavutil/pixfmt.h>
 
 namespace AV {
     NdiSource::NdiSource(std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {

@@ -13,12 +13,6 @@
 #include "decoder.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
-#include <asm-generic/errno-base.h>
-#include <libavcodec/avcodec.h>
-#include <libavcodec/packet.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/pixfmt.h>
-#include <libswscale/swscale.h>
 
 namespace AV {
     Decoder::Decoder(std::string &file) : m_file(file) {
