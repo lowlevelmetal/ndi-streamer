@@ -8,7 +8,6 @@
 
 // Standard library
 #include <cstdlib>
-#include <libavutil/pixfmt.h>
 #include <string>
 
 // POSIX includes
@@ -27,6 +26,12 @@ typedef struct CommandLineArguments {
 
     CommandLineArguments() : videofile(std::string("")), ndisource(std::string("NDI Source")) {}
 } COMMANDLINEARGUMENTS, *PCOMMANDLINEARGUMENTS;
+
+void Usage(const char *const argv0) {
+    printf("\n%s\n"
+            "\t-i /path/to/media.mp4\n"
+            "\t-s \"NDI Source Name\"\n\n", argv0);
+}
 
 // Process command line arguments
 ERRORTYPE ParseCommandLineArguments(COMMANDLINEARGUMENTS &cmdlineargs, int argc, char **argv) {
@@ -59,8 +64,10 @@ int main(int argc, char** argv) {
     COMMANDLINEARGUMENTS cmdlineargs;
 
     // Parse command line arguments
-    if(ParseCommandLineArguments(cmdlineargs, argc, argv) == FAILED)
-        FATAL("Failed to process command line input");
+    if(!ParseCommandLineArguments(cmdlineargs, argc, argv)) {
+        Usage(argv[0]);
+        return EXIT_FAILURE;
+    }
 
     // Create NDI server
     AV::NdiSource ndisrc(cmdlineargs.ndisource);
