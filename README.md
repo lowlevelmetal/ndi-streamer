@@ -1,4 +1,5 @@
 # ndi-streamer
+Stream the contents of an AV file over NDI
 
 ## Building
 
@@ -21,9 +22,15 @@ on your system configuration. Refer to the build system output.
 
 ### Invoking the build system
 
+Release Build
 ```
 mkdir build && cd build
 cmake .. && make
+```
+Debug Build
+```
+mkdir build && cd build
+cmake CMAKE_BUILD_TYPE=Debug .. && make
 ```
 
 This will generate the executable in your build directory
