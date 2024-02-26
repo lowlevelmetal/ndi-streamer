@@ -24,7 +24,6 @@ namespace AV {
 
         private:
             static int m_open_instances;
-            static bool m_initialized;
     };
 
 } // namespace AV

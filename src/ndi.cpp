@@ -10,13 +10,11 @@
 #include "ndi.hpp"
 
 namespace AV {
-    bool Ndi::m_initialized = false;
     int Ndi::m_open_instances = 0;
 
     Ndi::Ndi() {
-        if(!m_initialized) {
+        if(!m_open_instances) {
             NDIlib_initialize();
-            m_initialized = true;
         }
 
         m_open_instances++;
@@ -25,7 +23,7 @@ namespace AV {
     Ndi::~Ndi() {
         m_open_instances--;
 
-        if(m_open_instances <= 0) {
+        if(!m_open_instances) {
             NDIlib_destroy();
         }
     }
