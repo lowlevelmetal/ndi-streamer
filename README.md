@@ -30,7 +30,7 @@ cmake .. && make
 Debug Build
 ```
 mkdir build && cd build
-cmake CMAKE_BUILD_TYPE=Debug .. && make
+cmake -DCMAKE_BUILD_TYPE=Debug .. && make
 ```
 
 This will generate the executable in your build directory
