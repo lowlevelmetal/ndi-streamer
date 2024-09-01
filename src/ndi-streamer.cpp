@@ -75,8 +75,11 @@ int main(int argc, char **argv) {
 
     // Create transcoder
     AV::Transcode::TranscoderConfig transcoder_config(cmdlineargs.videofile);
+    transcoder_config.EnablePixelFormatTranscode(AV_PIX_FMT_UYVY422, 0, 0); // Transcode to UYVY422 and keep default width and height
+    transcoder_config.EnableSampleTranscode(AV_SAMPLE_FMT_FLTP, 0, 0);      // Transcode to float planar audio
+
     AV::Transcode::DynamicTranscoder transcoder(transcoder_config);
-    if(transcoder.GetLastError() != AV::Transcode::TranscoderErrorCode::NoError) {
+    if (transcoder.GetLastError() != AV::Transcode::TranscoderErrorCode::NoError) {
         ERROR("Failed to initialize transcoder");
         return EXIT_FAILURE;
     }

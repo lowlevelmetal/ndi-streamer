@@ -19,13 +19,17 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 }
 
 namespace AV::Transcode {
 
 enum StreamType {
     Video,
-    Audio
+    Audio,
+    None,
 };
 
 enum TranscoderErrorCode {
@@ -33,12 +37,17 @@ enum TranscoderErrorCode {
     InvalidInputFile,
     UnsupportedVideoCodec,
     UnsupportedAudioCodec,
+    SwsContextError,
+    SwrContextError,
+    FrameAllocError,
+    AvMallocError,
+    NotInitialized,
+    FrameReadError,
 };
 
 // The TranscoderConfig struct is used to configure the transcoder
 typedef struct TranscoderConfig {
-    std::string input_file;            // Input file
-    std::string output_file;           // Output file
+    std::string input_file;            // Input file          // Output file
     enum AVPixelFormat pixel_format;   // Desired pixel format
     enum AVSampleFormat sample_format; // Desired sample format
     int width;                         // Desired width
@@ -48,8 +57,8 @@ typedef struct TranscoderConfig {
     bool skip_pix_transcode;           // Skip transcoding video
     bool skip_sample_transcode;        // Skip transcoding audio
 
-    TranscoderConfig(std::string infile) : input_file(infile), output_file(""), skip_pix_transcode(true),
-                                               skip_sample_transcode(true) {}
+    TranscoderConfig(std::string infile) : input_file(infile), skip_pix_transcode(true),
+                                               skip_sample_transcode(true), width(0), height(0) {}
 
     void EnablePixelFormatTranscode(enum AVPixelFormat pixfmt, int w, int h) {
         skip_pix_transcode = false;
@@ -84,6 +93,10 @@ public:
 
     // Get the video frame buffer
     uint8_t *GetVideoFrameBuffer();
+    int GetVideoFrameWidth();
+    int GetVideoFrameHeight();
+    int GetVideoFrameFrNum();
+    int GetVideoFrameFrDen();
 
     // Get the audio frame buffer
     uint8_t *GetAudioFrameBuffer();
@@ -105,16 +118,17 @@ private:
 
     TranscoderConfig m_config;
     bool m_initialized = false;
-    bool m_file_output = false;
     TranscoderErrorCode m_last_error = TranscoderErrorCode::NoError;
 
-    uint8_t *m_frame_buffer = nullptr;
-    uint8_t *m_audio_buffer = nullptr;
+    AVFrame *m_video_frame = nullptr;
+    AVFrame *m_transcoded_video_frame = nullptr;
     uint8_t *m_transcoded_video_buffer = nullptr;
-    uint8_t *m_transcoded_audio_buffer = nullptr;
 
     // This is the FFMPEG context for the entire input file
     AVFormatContext *m_pformat_context = nullptr;
+
+    // This is the packet that will be used to read frames
+    AVPacket m_packet;
 
     // Here we need to create the codec context for the video and audio streams
     AVCodecContext *m_pvideo_codec_context = nullptr;
@@ -124,6 +138,10 @@ private:
     // This is used to get the correct stream from the FFMPEG context
     int m_video_stream_index = -1;
     int m_audio_stream_index = -1;
+
+    // Transcoding contexts
+    SwsContext *m_psws_context = nullptr; // Pixel format
+    SwrContext *m_pswr_context = nullptr; // Sample format
     
 };
 
