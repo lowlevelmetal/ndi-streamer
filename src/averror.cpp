@@ -48,6 +48,8 @@ namespace AV {
                 return std::string("Failed to fill frame with decoded output");
             case AvErrorCode::NotVideoFrame:
                 return std::string("Frame is not a video frame");
+            case AvErrorCode::NotAudioFrame:
+                return std::string("Frame is not an audio frame");
         }
 
         return std::string("Invalid AV error code");

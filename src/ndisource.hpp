@@ -15,6 +15,11 @@
 #include "ndi.hpp"
 #include "ndierror.hpp"
 
+extern "C" {
+    #include <libavformat/avformat.h>
+    #include <libavcodec/avcodec.h>
+}
+
 namespace AV {
 
     class NdiSource : public Ndi {
@@ -22,7 +27,8 @@ namespace AV {
             NdiSource(std::string &ndi_source_name);
             ~NdiSource();
 
-            NdiErrorCode SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data);
+            NdiErrorCode SendVideoPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data);
+            NdiErrorCode SendAudioPacket(uint8_t *audio_data, int sample_rate, int channels, int samples, int stride, enum AVSampleFormat sample_fmt);
 
         private:
             NDIlib_send_instance_t m_pNDI_send;

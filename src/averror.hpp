@@ -31,7 +31,8 @@ namespace AV {
         NullPointer,
         PacketSend,
         RecieveFrame,
-        NotVideoFrame
+        NotVideoFrame,
+        NotAudioFrame
     };
 
     std::string AvErrorStr(AvErrorCode &err);
