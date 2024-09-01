@@ -64,10 +64,14 @@ AvErrorCode Decoder::OpenFile(std::string &file) {
         return AvErrorCode::DecoderNotInitialized;
 
     // Parse the av file header
-    if (m_pformat_context && avformat_open_input(&m_pformat_context, file.c_str(), nullptr, nullptr) != 0)
+    if (m_pformat_context &&
+        avformat_open_input(&m_pformat_context, file.c_str(), nullptr,
+                            nullptr) != 0)
         return AvErrorCode::FormatHeader;
 
-    DEBUG("format %s, duration %ld us, bit_rate %ld", m_pformat_context->iformat->name, m_pformat_context->duration, m_pformat_context->bit_rate);
+    DEBUG("format %s, duration %ld us, bit_rate %ld",
+          m_pformat_context->iformat->name, m_pformat_context->duration,
+          m_pformat_context->bit_rate);
 
     // Get information for each av stream in the file
     if (avformat_find_stream_info(m_pformat_context, nullptr) < 0)
@@ -76,17 +80,25 @@ AvErrorCode Decoder::OpenFile(std::string &file) {
     // Find AV stream
     for (int i = 0; i < m_pformat_context->nb_streams; i++) {
         // Get codec information
-        AVCodecParameters *pcodec_parameters = m_pformat_context->streams[i]->codecpar;
+        AVCodecParameters *pcodec_parameters =
+            m_pformat_context->streams[i]->codecpar;
 
         // Print some debug information (in debug build only)
-        DEBUG("AVStream->time_base before open coded %d/%d", m_pformat_context->streams[i]->time_base.num, m_pformat_context->streams[i]->time_base.den);
-        DEBUG("AVStream->r_frame_rate before open coded %d/%d", m_pformat_context->streams[i]->r_frame_rate.num, m_pformat_context->streams[i]->r_frame_rate.den);
-        DEBUG("AVStream->start_time %" PRId64, m_pformat_context->streams[i]->start_time);
-        DEBUG("AVStream->duration %" PRId64, m_pformat_context->streams[i]->duration);
+        DEBUG("AVStream->time_base before open coded %d/%d",
+              m_pformat_context->streams[i]->time_base.num,
+              m_pformat_context->streams[i]->time_base.den);
+        DEBUG("AVStream->r_frame_rate before open coded %d/%d",
+              m_pformat_context->streams[i]->r_frame_rate.num,
+              m_pformat_context->streams[i]->r_frame_rate.den);
+        DEBUG("AVStream->start_time %" PRId64,
+              m_pformat_context->streams[i]->start_time);
+        DEBUG("AVStream->duration %" PRId64,
+              m_pformat_context->streams[i]->duration);
 
         DEBUG("finding the proper decoder (CODEC)\n");
 
-        const AVCodec *pcodec = avcodec_find_decoder(pcodec_parameters->codec_id);
+        const AVCodec *pcodec =
+            avcodec_find_decoder(pcodec_parameters->codec_id);
         if (pcodec == nullptr) {
             DEBUG("Unsupported codec detected");
             continue;
@@ -132,10 +144,12 @@ AvErrorCode Decoder::OpenFile(std::string &file) {
         return AvErrorCode::CodecContext;
 
     // Fill the new codec context with the selected codec parameters
-    if (avcodec_parameters_to_context(m_vcodec_context, m_vcodec_parameters) < 0)
+    if (avcodec_parameters_to_context(m_vcodec_context, m_vcodec_parameters) <
+        0)
         return AvErrorCode::CodecParameters;
 
-    if (avcodec_parameters_to_context(m_acodec_context, m_acodec_parameters) < 0)
+    if (avcodec_parameters_to_context(m_acodec_context, m_acodec_parameters) <
+        0)
         return AvErrorCode::CodecParameters;
 
     // Finish codec initialization
@@ -173,7 +187,8 @@ AvErrorCode Decoder::ReadFrame() {
     int ret = av_read_frame(m_pformat_context, m_ppacket);
     if (ret < 0) {
         if (ret != AVERROR_EOF) {
-            ERROR("av_read_frame debug information --> 0x%04x,%d", ret, m_video_total_frames);
+            ERROR("av_read_frame debug information --> 0x%04x,%d", ret,
+                  m_video_total_frames);
             return AvErrorCode::FrameRead;
         }
 
@@ -241,7 +256,9 @@ AvErrorCode Decoder::DecodeAudioPacket() {
 
 uint8_t *Decoder::ConvertToUVYV() {
     // Create frame buffer
-    int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_UYVY422, m_vcodec_context->width, m_vcodec_context->height, 1);
+    int buffer_size =
+        av_image_get_buffer_size(AV_PIX_FMT_UYVY422, m_vcodec_context->width,
+                                 m_vcodec_context->height, 1);
     uint8_t *frame_buffer = (uint8_t *)av_malloc(buffer_size);
     if (frame_buffer == nullptr) {
         ERROR("Failed to create frame buffer");
@@ -249,24 +266,29 @@ uint8_t *Decoder::ConvertToUVYV() {
     }
 
     // Setup SWS context to convert formats
-    struct SwsContext *sws_context = sws_getContext(m_vcodec_context->width, m_vcodec_context->height,
-                                                    m_vcodec_context->pix_fmt, m_vcodec_context->width, m_vcodec_context->height, AV_PIX_FMT_UYVY422,
-                                                    SWS_BICUBIC, nullptr, nullptr, nullptr);
+    struct SwsContext *sws_context =
+        sws_getContext(m_vcodec_context->width, m_vcodec_context->height,
+                       m_vcodec_context->pix_fmt, m_vcodec_context->width,
+                       m_vcodec_context->height, AV_PIX_FMT_UYVY422,
+                       SWS_BICUBIC, nullptr, nullptr, nullptr);
     if (sws_context == nullptr) {
         ERROR("Failed to create sws context");
         return nullptr;
     }
 
     // Setup data pointers and line sizes
-    if (av_image_fill_arrays(m_puyvy_frame->data, m_puyvy_frame->linesize, frame_buffer, AV_PIX_FMT_UYVY422,
-                             m_vcodec_context->width, m_vcodec_context->height, 1) < 0) {
+    if (av_image_fill_arrays(m_puyvy_frame->data, m_puyvy_frame->linesize,
+                             frame_buffer, AV_PIX_FMT_UYVY422,
+                             m_vcodec_context->width, m_vcodec_context->height,
+                             1) < 0) {
         ERROR("Failed to av_image_fill_arrays");
         return nullptr;
     }
 
     // Scale and convert
-    sws_scale(sws_context, m_pframe->data, m_pframe->linesize, 0, m_vcodec_context->height,
-              m_puyvy_frame->data, m_puyvy_frame->linesize);
+    sws_scale(sws_context, m_pframe->data, m_pframe->linesize, 0,
+              m_vcodec_context->height, m_puyvy_frame->data,
+              m_puyvy_frame->linesize);
 
     // Free sws context
     sws_freeContext(sws_context);
@@ -284,33 +306,19 @@ void Decoder::GetPacketFrameRate(int *num, int *den) {
     *den = m_vcodec_context->framerate.den;
 }
 
-int Decoder::GetPacketStride() {
-    return m_pframe->linesize[0];
-}
+int Decoder::GetPacketStride() { return m_pframe->linesize[0]; }
 
-int Decoder::GetUVYVPacketStride() {
-    return m_puyvy_frame->linesize[0];
-}
+int Decoder::GetUVYVPacketStride() { return m_puyvy_frame->linesize[0]; }
 
-int Decoder::GetFrameFormat() {
-    return m_pframe->format;
-}
+int Decoder::GetFrameFormat() { return m_pframe->format; }
 
-uint8_t *Decoder::GetPacketData() {
-    return m_pframe->data[0];
-}
+uint8_t *Decoder::GetPacketData() { return m_pframe->data[0]; }
 
-int Decoder::GetSampleRate() {
-    return m_acodec_context->sample_rate;
-}
+int Decoder::GetSampleRate() { return m_acodec_context->sample_rate; }
 
-int Decoder::GetAudioChannels() {
-    return m_acodec_context->channels;
-}
+int Decoder::GetAudioChannels() { return m_acodec_context->channels; }
 
-int Decoder::GetSampleCount() {
-    return m_pframe->nb_samples;
-}
+int Decoder::GetSampleCount() { return m_pframe->nb_samples; }
 
 int Decoder::GetBytesPerSample() {
     return av_get_bytes_per_sample(m_acodec_context->sample_fmt);
