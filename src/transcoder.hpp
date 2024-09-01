@@ -15,10 +15,25 @@
 // 3rd party includes
 extern "C" {
 #include <libavutil/pixfmt.h>
+#include <libavutil/pixdesc.h>
 #include <libavutil/samplefmt.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 }
 
-namespace av::transcode {
+namespace AV::Transcode {
+
+enum StreamType {
+    Video,
+    Audio
+};
+
+enum TranscoderErrorCode {
+    NoError,
+    InvalidInputFile,
+    UnsupportedVideoCodec,
+    UnsupportedAudioCodec,
+};
 
 // The TranscoderConfig struct is used to configure the transcoder
 typedef struct TranscoderConfig {
@@ -33,7 +48,7 @@ typedef struct TranscoderConfig {
     bool skip_pix_transcode;           // Skip transcoding video
     bool skip_sample_transcode;        // Skip transcoding audio
 
-    TranscoderConfig(std::string input_file) : input_file(""), output_file(""), skip_pix_transcode(true),
+    TranscoderConfig(std::string infile) : input_file(infile), output_file(""), skip_pix_transcode(true),
                                                skip_sample_transcode(true) {}
 
     void EnablePixelFormatTranscode(enum AVPixelFormat pixfmt, int w, int h) {
@@ -60,9 +75,18 @@ typedef struct TranscoderConfig {
 // should be done in a more controlled environment.
 class DynamicTranscoder {
 public:
-    DynamicTranscoder();
     DynamicTranscoder(TranscoderConfig &config);
     ~DynamicTranscoder();
+
+    // Tell the transcoder to process a frame then return stream type
+    // If you have transcoding enabled, this will also happen at this stage
+    StreamType ProcessFrame();
+
+    // Get the video frame buffer
+    uint8_t *GetVideoFrameBuffer();
+
+    // Get the audio frame buffer
+    uint8_t *GetAudioFrameBuffer();
 
     // Enable/disable sample/pixel format transcoding
     void EnablePixelFormatTranscode(enum AVPixelFormat pixfmt, int w, int h);
@@ -70,12 +94,37 @@ public:
     void DisablePixelFormatTranscode();
     void DisableSampleTranscode();
 
+    // Get the last error code
+    TranscoderErrorCode GetLastError();
+
+    // Check if the transcoder is initialized
+    bool IsInitialized();
+
 private:
-    int m_OpenFile(std::string &file);
+    TranscoderErrorCode m_InitializeTranscoder();
 
     TranscoderConfig m_config;
     bool m_initialized = false;
     bool m_file_output = false;
+    TranscoderErrorCode m_last_error = TranscoderErrorCode::NoError;
+
+    uint8_t *m_frame_buffer = nullptr;
+    uint8_t *m_audio_buffer = nullptr;
+    uint8_t *m_transcoded_video_buffer = nullptr;
+    uint8_t *m_transcoded_audio_buffer = nullptr;
+
+    // This is the FFMPEG context for the entire input file
+    AVFormatContext *m_pformat_context = nullptr;
+
+    // Here we need to create the codec context for the video and audio streams
+    AVCodecContext *m_pvideo_codec_context = nullptr;
+    AVCodecContext *m_paudio_codec_context = nullptr;
+
+    // This is the video and audio stream index
+    // This is used to get the correct stream from the FFMPEG context
+    int m_video_stream_index = -1;
+    int m_audio_stream_index = -1;
+    
 };
 
 } // namespace av::transcode

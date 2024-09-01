@@ -15,11 +15,10 @@
 #include <unistd.h>
 
 // Local includes
-#include "averror.hpp"
-#include "decoder.hpp"
 #include "macro.hpp"
 #include "ndierror.hpp"
 #include "ndisource.hpp"
+#include "transcoder.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -74,90 +73,21 @@ int main(int argc, char **argv) {
     // Create NDI server
     AV::NdiSource ndisrc(cmdlineargs.ndisource);
 
-    // Create libav decoder
-    AV::Decoder decoder(cmdlineargs.videofile);
+    // Create transcoder
+    AV::Transcode::TranscoderConfig transcoder_config(cmdlineargs.videofile);
+    AV::Transcode::DynamicTranscoder transcoder(transcoder_config);
+    if(transcoder.GetLastError() != AV::Transcode::TranscoderErrorCode::NoError) {
+        ERROR("Failed to initialize transcoder");
+        return EXIT_FAILURE;
+    }
 
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
 #endif
 
-    int total_audio_frames = 0;
-    int total_video_frames = 0;
-    AV::AvErrorCode ret;
-    while ((ret = decoder.ReadFrame()) == AV::AvErrorCode::NoError) { // Read a frame
-        if (decoder.IsCurrentFrameVideo()) {                          // If the frame is a video
-            DEBUG("Processing Video Frame --> %d", total_video_frames);
-
-            int decoder_count = 0;
-            while ((ret = decoder.DecodeVideoPacket()) == AV::AvErrorCode::NoError) { // Start decoding packets in frames
-                DEBUG("Packet Decoded --> %d", decoder_count);
-
-                // Convert pixel format to UVYV
-                //
-                // YUV420p is very commonly used in mpeg4 files
-                // which is not explicitly supported by NDI
-                uint8_t *converted_buffer = decoder.ConvertToUVYV();
-                if (!converted_buffer) {
-                    FATAL("Failed to create UVYV buffer");
-                }
-
-                int resx, resy;
-                int fr_num, fr_den;
-
-                decoder.GetPacketDimensions(&resx, &resy);
-                decoder.GetPacketFrameRate(&fr_num, &fr_den);
-
-                // Send an NDI video packet out on the network
-                auto ndiret = ndisrc.SendVideoPacket(AV_PIX_FMT_UYVY422,
-                                                     resx, resy,
-                                                     fr_num, fr_den,
-                                                     decoder.GetUVYVPacketStride(),
-                                                     converted_buffer);
-
-                if (ndiret != AV::NdiErrorCode::NoError)
-                    FATAL("%s", AV::NdiErrorStr(ndiret).c_str());
-
-                // We need to manually free the av_buffer that was
-                // created by ConvertToUVYV
-                av_free(converted_buffer);
-
-                decoder_count++;
-            }
-
-            if (ret != AV::AvErrorCode::PacketsClaimed)
-                FATAL("%s", AV::AvErrorStr(ret).c_str());
-
-            total_video_frames++;
-        } else if (decoder.IsCurrentFrameAudio()) { // If the frame is audio
-            DEBUG("Processing Audio Frame --> %d", total_audio_frames);
-
-            int decoder_count = 0;
-            while ((ret = decoder.DecodeAudioPacket()) == AV::AvErrorCode::NoError) { // Start decoding packets in frames
-                DEBUG("Audio Packet Decoded --> %d", decoder_count);
-                decoder_count++;
-
-                uint8_t *audio_data = decoder.GetPacketData();
-                int sample_rate = decoder.GetSampleRate();
-                int channels = decoder.GetAudioChannels();
-                int samples = decoder.GetSampleCount();
-                int stride = decoder.GetBytesPerSample();
-
-                ndisrc.SendAudioPacket(audio_data, sample_rate, channels, samples, stride, decoder.GetAudioSampleFormat());
-
-                if (ret != AV::AvErrorCode::NoError)
-                    FATAL("%s", AV::AvErrorStr(ret).c_str());
-            }
-
-            if (ret != AV::AvErrorCode::PacketsClaimed)
-                FATAL("%s", AV::AvErrorStr(ret).c_str());
-
-            total_audio_frames++;
-        }
-    }
-
-    if (ret != AV::AvErrorCode::PacketsClaimed)
-        FATAL("%s", AV::AvErrorStr(ret).c_str());
+    fflush(stdout);
+    fflush(stderr);
 
     return EXIT_SUCCESS;
 }
