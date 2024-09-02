@@ -10,7 +10,6 @@
 #include "ndisource.hpp"
 #include "Processing.NDI.Send.h"
 #include "Processing.NDI.structs.h"
-#include "decoder.hpp"
 #include "macro.hpp"
 #include "ndierror.hpp"
 

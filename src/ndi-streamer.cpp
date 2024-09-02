@@ -18,7 +18,6 @@
 #include "macro.hpp"
 #include "ndierror.hpp"
 #include "ndisource.hpp"
-#include "transcoder.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -74,15 +73,6 @@ int main(int argc, char **argv) {
     AV::NdiSource ndisrc(cmdlineargs.ndisource);
 
     // Create transcoder
-    AV::Transcode::TranscoderConfig transcoder_config(cmdlineargs.videofile);
-    transcoder_config.EnablePixelFormatTranscode(AV_PIX_FMT_UYVY422, 0, 0); // Transcode to UYVY422 and keep default width and height
-    transcoder_config.EnableSampleTranscode(AV_SAMPLE_FMT_FLTP, 0, 0);      // Transcode to float planar audio
-
-    AV::Transcode::DynamicTranscoder transcoder(transcoder_config);
-    if (transcoder.GetLastError() != AV::Transcode::TranscoderErrorCode::NoError) {
-        ERROR("Failed to initialize transcoder");
-        return EXIT_FAILURE;
-    }
 
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;

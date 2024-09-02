@@ -24,8 +24,7 @@ set(SOURCES
     src/ndi-streamer.cpp
     src/ndi.cpp
     src/ndierror.cpp
-    src/ndisource.cpp
-    src/transcoder.cpp)
+    src/ndisource.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
