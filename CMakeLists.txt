@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.0)
 project(NDIStreamer)
 
+# C++ Standard
+set(CMAKE_CXX_STANDARD 20)  # Or 20 for C++20
+set(CMAKE_CXX_STANDARD_REQUIRED True)  # Ensure the compiler respects the version
+set(CMAKE_CXX_EXTENSIONS OFF)  # Disable compiler-specific extensions like gnu++17
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
@@ -24,7 +29,8 @@ set(SOURCES
     src/ndi-streamer.cpp
     src/ndi.cpp
     src/ndierror.cpp
-    src/ndisource.cpp)
+    src/ndisource.cpp
+    src/demuxer.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

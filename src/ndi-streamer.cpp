@@ -18,6 +18,7 @@
 #include "macro.hpp"
 #include "ndierror.hpp"
 #include "ndisource.hpp"
+#include "demuxer.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -69,10 +70,13 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Create NDI server
-    AV::NdiSource ndisrc(cmdlineargs.ndisource);
-
-    // Create transcoder
+    {
+        auto [demuxer, demuxer_error] = AV::Utils::Demuxer::Create(cmdlineargs.videofile);
+        if (demuxer_error.code()) {
+            ERROR("Error creating demuxer: %s", demuxer_error.what());
+            return EXIT_FAILURE;
+        }
+    }
 
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
