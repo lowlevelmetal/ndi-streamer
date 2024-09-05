@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.14)
 project(NDIStreamer)
 
 # C++ Standard
@@ -40,3 +40,9 @@ else()
     add_executable(ndistreamer ${SOURCES})
     target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
 endif()
+
+# Enable testing
+enable_testing()
+
+# Add tests directory
+add_subdirectory(tests)
