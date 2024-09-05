@@ -8,6 +8,8 @@
 #include "demuxer.hpp"
 #include "macro.hpp"
 
+#define DEMUXSTR "[DEMUXER]"
+
 /**
  * @brief The AV::Utils namespace contains utilities for audio and video processing.
  */
@@ -23,11 +25,11 @@ DemuxerException::DemuxerException(DemuxerError errcode) : m_errcode(errcode) {}
 const char *DemuxerException::what() const noexcept {
     switch (m_errcode) {
     case DemuxerError::NOERROR:
-        return "[Demuxer] No error";
+        return DEMUXSTR " No error";
     case DemuxerError::OPENINPUT:
-        return "[Demuxer] Error opening input";
+        return DEMUXSTR " Error opening input";
     default:
-        return "[Demuxer] Unknown error";
+        return DEMUXSTR " Unknown error";
     }
 }
 
@@ -43,17 +45,17 @@ const int DemuxerException::code() const noexcept {
  * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, DemuxerException>
  */
 DemuxerResult Demuxer::Create(const std::string &path) {
-    DemuxerError error = DemuxerError::NOERROR;
+    DemuxerException error(DemuxerError::NOERROR);
 
     // Create a new demuxer object, return nullopt if error
     try {
         return {std::unique_ptr<Demuxer>(new Demuxer(path)), DemuxerException(DemuxerError::NOERROR)};
-    } catch (DemuxerError err) {
-        DEBUG("Demuxer error: %d", static_cast<int>(err));
+    } catch (DemuxerException err) {
+        DEBUG("Demuxer error: %s", err.what());
         error = err;
     }
 
-    return {std::nullopt, DemuxerException(error)};
+    return {std::nullopt, error};
 }
 
 /**
@@ -66,7 +68,7 @@ Demuxer::Demuxer(const std::string &path) : m_path(path) {
 
     DemuxerError err = m_Initialize();
     if (err != DemuxerError::NOERROR) {
-        throw err;
+        throw err; // you can throw the error code because the compiler is smart enough to call the constructor
     }
 }
 

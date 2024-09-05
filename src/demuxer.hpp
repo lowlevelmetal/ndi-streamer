@@ -24,7 +24,7 @@ namespace AV::Utils {
 // Forward declarations
 class Demuxer;
 class DemuxerException;
-using DemuxerResult = std::pair<std::optional<std::unique_ptr<Demuxer>>, DemuxerException>;
+using DemuxerResult = std::pair<std::optional<std::unique_ptr<Demuxer>>, const DemuxerException>;
 
 /**
  * @brief The DemuxerError enum class represents the possible errors that can occur when demuxing a media file.
