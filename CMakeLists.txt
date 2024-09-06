@@ -27,9 +27,7 @@ include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 # Define sources
 set(SOURCES
     src/ndi-streamer.cpp
-    src/ndi.cpp
-    src/ndierror.cpp
-    src/ndisource.cpp
+    src/averror.cpp
     src/demuxer.cpp)
 
 # Set executable name

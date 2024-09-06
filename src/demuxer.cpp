@@ -8,42 +8,10 @@
 #include "demuxer.hpp"
 #include "macro.hpp"
 
-#define DEMUXSTR "[DEMUXER]"
-
 /**
  * @brief The AV::Utils namespace contains utilities for audio and video processing.
  */
 namespace AV::Utils {
-
-/**
- * @brief Construct a new DemuxerException:: DemuxerException object
- *
- * @param errcode error code
- */
-DemuxerException::DemuxerException(DemuxerError errcode) : m_errcode(errcode) {}
-
-const char *DemuxerException::what() const noexcept {
-    switch (m_errcode) {
-    case DemuxerError::NOERROR:
-        return DEMUXSTR " No error";
-    case DemuxerError::OPENINPUT:
-        return DEMUXSTR " Error opening input";
-    case DemuxerError::AVDICTSET:
-        return DEMUXSTR " Error setting dictionary";
-    case DemuxerError::READFRAME:
-        return DEMUXSTR " Error reading frame";
-    case DemuxerError::PACKETALLOC:
-        return DEMUXSTR " Error allocating packet";
-    case DemuxerError::FINDSTREAMINFO:
-        return DEMUXSTR " Error finding stream info";
-    default:
-        return DEMUXSTR " Unknown error";
-    }
-}
-
-const int DemuxerException::code() const noexcept {
-    return static_cast<int>(m_errcode);
-}
 
 /**
  * @brief Get the streams from the media file.
@@ -72,25 +40,25 @@ ReadFrameResult Demuxer::ReadFrame() {
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
     if (ret < 0) {
-        return {std::nullopt, DemuxerException(DemuxerError::READFRAME)};
+        return {std::nullopt, AvException(AvError::READFRAME)};
     }
 
-    return {m_packet, DemuxerException(DemuxerError::NOERROR)};
+    return {m_packet, AvException(AvError::NOERROR)};
 }
 
 /**
  * @brief Create a Demuxer object
  *
  * @param path path to media file
- * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, DemuxerException>
+ * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, AvException>
  */
 DemuxerResult Demuxer::Create(const std::string &path) {
-    DemuxerException error(DemuxerError::NOERROR);
+    AvException error(AvError::NOERROR);
 
     // Create a new demuxer object, return nullopt if error
     try {
-        return {std::unique_ptr<Demuxer>(new Demuxer(path)), DemuxerException(DemuxerError::NOERROR)};
-    } catch (DemuxerException err) {
+        return {std::unique_ptr<Demuxer>(new Demuxer(path)), AvException(AvError::NOERROR)};
+    } catch (AvException err) {
         DEBUG("Demuxer error: %s", err.what());
         error = err;
     }
@@ -102,15 +70,15 @@ DemuxerResult Demuxer::Create(const std::string &path) {
  * @brief Create a Demuxer object
  * 
  * @param config demuxer configuration
- * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, DemuxerException>
+ * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, AvException>
  */
 DemuxerResult Demuxer::Create(const DemuxerConfig &config) {
-    DemuxerException error(DemuxerError::NOERROR);
+    AvException error(AvError::NOERROR);
 
     // Create a new demuxer object, return nullopt if error
     try {
-        return {std::unique_ptr<Demuxer>(new Demuxer(config)), DemuxerException(DemuxerError::NOERROR)};
-    } catch (DemuxerException err) {
+        return {std::unique_ptr<Demuxer>(new Demuxer(config)), AvException(AvError::NOERROR)};
+    } catch (AvException err) {
         DEBUG("Demuxer error: %s", err.what());
         error = err;
     }
@@ -128,8 +96,8 @@ Demuxer::Demuxer(const std::string &path) {
 
     m_config.path = path;
 
-    DemuxerError err = m_InitializeAuto();
-    if (err != DemuxerError::NOERROR) {
+    AvError err = m_InitializeAuto();
+    if (err != AvError::NOERROR) {
         throw err; // you can throw the error code because the compiler is smart enough to call the constructor
     }
 }
@@ -144,8 +112,8 @@ Demuxer::Demuxer(const DemuxerConfig &config) : m_config(config) {
 
     m_config = config;
 
-    DemuxerError err = m_InitializeWithConfig();
-    if (err != DemuxerError::NOERROR) {
+    AvError err = m_InitializeWithConfig();
+    if (err != AvError::NOERROR) {
         throw err; // you can throw the error code because the compiler is smart enough to call the constructor
     }
 }
@@ -177,14 +145,14 @@ Demuxer::~Demuxer() {
 /**
  * @brief Initialize the demuxer.
  *
- * @return DemuxerError
+ * @return AvError
  */
-DemuxerError Demuxer::m_InitializeAuto() {
+AvError Demuxer::m_InitializeAuto() {
     // This initializes the context and opens the file
     int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, nullptr);
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
-        return DemuxerError::OPENINPUT;
+        return AvError::OPENINPUT;
     }
 
     return m_Initialize();
@@ -193,49 +161,49 @@ DemuxerError Demuxer::m_InitializeAuto() {
 /**
  * @brief Initialize the demuxer with a configuration.
  * 
- * @return DemuxerError
+ * @return AvError
  */
-DemuxerError Demuxer::m_InitializeWithConfig() {
+AvError Demuxer::m_InitializeWithConfig() {
     // Set the width and height if they are provided
     if (m_config.width && m_config.height) {
         DEBUG("Width: %d, Height: %d", m_config.width, m_config.height);
         if(av_dict_set(&m_opts, "video_size", (std::to_string(m_config.width) + "x" + std::to_string(m_config.height)).c_str(), 0))
-            return DemuxerError::AVDICTSET;
+            return AvError::AVDICTSET;
     }
 
     if(!m_config.pixel_format.empty()) {
         DEBUG("Pixel format: %s", m_config.pixel_format.c_str());
         if(av_dict_set(&m_opts, "pixel_format", m_config.pixel_format.c_str(), 0))
-            return DemuxerError::AVDICTSET;
+            return AvError::AVDICTSET;
     }
 
     // This initializes the context and opens the file
     int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, &m_opts);
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
-        return DemuxerError::OPENINPUT;
+        return AvError::OPENINPUT;
     }
 
     return m_Initialize();
 }
 
-DemuxerError Demuxer::m_Initialize() {
+AvError Demuxer::m_Initialize() {
 
     // Create the packet
     m_packet = av_packet_alloc();
     if (!m_packet) {
         DEBUG("av_packet_alloc failed");
-        return DemuxerError::PACKETALLOC;
+        return AvError::PACKETALLOC;
     }
 
     // Make sure the stream information is loaded into the format context
     int ret = avformat_find_stream_info(m_format_ctx, nullptr);
     if (ret < 0) {
         DEBUG("avformat_find_stream_info failed");
-        return DemuxerError::FINDSTREAMINFO;
+        return AvError::FINDSTREAMINFO;
     }
 
-    return DemuxerError::NOERROR;
+    return AvError::NOERROR;
 }
 
 } // namespace AV::Utils

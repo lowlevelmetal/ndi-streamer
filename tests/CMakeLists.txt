@@ -15,7 +15,7 @@ add_custom_target(download_video ALL
 
 find_package(GTest REQUIRED)
 
-add_executable(demuxer_test demuxer_test.cpp ../src/demuxer.cpp)
+add_executable(demuxer_test demuxer_test.cpp ../src/demuxer.cpp ../src/averror.cpp)
 
 add_dependencies(demuxer_test download_video)
 

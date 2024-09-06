@@ -15,6 +15,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
+#include "averror.hpp"
+
 #pragma once
 
 /**
@@ -24,9 +26,8 @@ namespace AV::Utils {
 
 // Forward declarations
 class Demuxer;
-class DemuxerException;
-using DemuxerResult = std::pair<std::unique_ptr<Demuxer>, const DemuxerException>;
-using ReadFrameResult = std::pair<std::optional<AVPacket*>, const DemuxerException>;
+using DemuxerResult = std::pair<std::unique_ptr<Demuxer>, const AvException>;
+using ReadFrameResult = std::pair<std::optional<AVPacket*>, const AvException>;
 using GetStreamResult = std::vector<AVStream *>;
 
 typedef struct DemuxerConfig {
@@ -34,32 +35,6 @@ typedef struct DemuxerConfig {
     int width, height;
     std::string pixel_format;
 } demuxerconfig, *pdemuxerconfig;
-
-/**
- * @brief The DemuxerError enum class represents the possible errors that can occur when demuxing a media file.
- */
-enum class DemuxerError {
-    NOERROR,
-    OPENINPUT,
-    AVDICTSET,
-    READFRAME,
-    PACKETALLOC,
-    FINDSTREAMINFO,
-};
-
-/**
- * @brief The DemuxerException class represents an exception that is thrown when an error occurs while demuxing a media file.
- */
-class DemuxerException : public std::exception {
-public:
-    DemuxerException(DemuxerError errcode);
-
-    const char *what() const noexcept override;
-    const int code() const noexcept;
-
-private:
-    DemuxerError m_errcode;
-};
 
 /**
  * @brief The Demuxer class provides utilities for demuxing media files.
@@ -85,9 +60,9 @@ public:
     GetStreamResult GetStreams();
 
 private:
-    DemuxerError m_InitializeAuto();
-    DemuxerError m_InitializeWithConfig();
-    DemuxerError m_Initialize(); // This is called by both other initialization methods
+    AvError m_InitializeAuto();
+    AvError m_InitializeWithConfig();
+    AvError m_Initialize(); // This is called by both other initialization methods
 
     DemuxerConfig m_config;
     AVFormatContext* m_format_ctx = nullptr;

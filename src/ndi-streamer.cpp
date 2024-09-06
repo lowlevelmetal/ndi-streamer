@@ -16,9 +16,6 @@
 
 // Local includes
 #include "macro.hpp"
-#include "ndierror.hpp"
-#include "ndisource.hpp"
-#include "demuxer.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
