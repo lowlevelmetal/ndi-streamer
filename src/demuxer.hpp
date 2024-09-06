@@ -31,9 +31,9 @@ using ReadFrameResult = std::pair<std::optional<AVPacket*>, const AvException>;
 using GetStreamResult = std::vector<AVStream *>;
 
 typedef struct DemuxerConfig {
-    std::string path;
-    int width, height;
-    std::string pixel_format;
+    std::string path{""};
+    int width{0}, height{0};
+    std::string pixel_format{""};
 } demuxerconfig, *pdemuxerconfig;
 
 /**
@@ -60,9 +60,7 @@ public:
     GetStreamResult GetStreams();
 
 private:
-    AvError m_InitializeAuto();
-    AvError m_InitializeWithConfig();
-    AvError m_Initialize(); // This is called by both other initialization methods
+    AvError m_Initialize();
 
     DemuxerConfig m_config;
     AVFormatContext* m_format_ctx = nullptr;

@@ -37,6 +37,8 @@ TEST(DemuxerTest, ReadMultipleFrames) {
     EXPECT_EQ(packet_err.code(), 0);
     auto [packet2, packet_err2] = demuxer->ReadFrame();
     EXPECT_EQ(packet_err2.code(), 0);
+    auto [packet3, packet_err3] = demuxer->ReadFrame();
+    EXPECT_EQ(packet_err3.code(), 0);
 }
 
 TEST(DemuxerTest, GetStreams) {

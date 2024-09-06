@@ -96,7 +96,7 @@ Demuxer::Demuxer(const std::string &path) {
 
     m_config.path = path;
 
-    AvError err = m_InitializeAuto();
+    AvError err = m_Initialize();
     if (err != AvError::NOERROR) {
         throw err; // you can throw the error code because the compiler is smart enough to call the constructor
     }
@@ -110,9 +110,7 @@ Demuxer::Demuxer(const std::string &path) {
 Demuxer::Demuxer(const DemuxerConfig &config) : m_config(config) {
     DEBUG("Constructing Demuxer object");
 
-    m_config = config;
-
-    AvError err = m_InitializeWithConfig();
+    AvError err = m_Initialize();
     if (err != AvError::NOERROR) {
         throw err; // you can throw the error code because the compiler is smart enough to call the constructor
     }
@@ -142,28 +140,8 @@ Demuxer::~Demuxer() {
     }
 }
 
-/**
- * @brief Initialize the demuxer.
- *
- * @return AvError
- */
-AvError Demuxer::m_InitializeAuto() {
-    // This initializes the context and opens the file
-    int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, nullptr);
-    if (ret < 0) {
-        DEBUG("avformat_open_input failed");
-        return AvError::OPENINPUT;
-    }
+AvError Demuxer::m_Initialize() {
 
-    return m_Initialize();
-}
-
-/**
- * @brief Initialize the demuxer with a configuration.
- * 
- * @return AvError
- */
-AvError Demuxer::m_InitializeWithConfig() {
     // Set the width and height if they are provided
     if (m_config.width && m_config.height) {
         DEBUG("Width: %d, Height: %d", m_config.width, m_config.height);
@@ -178,16 +156,13 @@ AvError Demuxer::m_InitializeWithConfig() {
     }
 
     // This initializes the context and opens the file
+    //
+    // NOTE: It is safe to pass &m_opts even if it is nullptr
     int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, &m_opts);
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
         return AvError::OPENINPUT;
     }
-
-    return m_Initialize();
-}
-
-AvError Demuxer::m_Initialize() {
 
     // Create the packet
     m_packet = av_packet_alloc();
@@ -197,7 +172,7 @@ AvError Demuxer::m_Initialize() {
     }
 
     // Make sure the stream information is loaded into the format context
-    int ret = avformat_find_stream_info(m_format_ctx, nullptr);
+    ret = avformat_find_stream_info(m_format_ctx, nullptr);
     if (ret < 0) {
         DEBUG("avformat_find_stream_info failed");
         return AvError::FINDSTREAMINFO;
