@@ -27,7 +27,7 @@ namespace AV::Utils {
 // Forward declarations
 class Demuxer;
 using DemuxerResult = std::pair<std::unique_ptr<Demuxer>, const AvException>;
-using ReadFrameResult = std::pair<std::optional<AVPacket*>, const AvException>;
+using ReadFrameResult = std::pair<AVPacket*, const AvException>;
 using GetStreamResult = std::vector<AVStream *>;
 
 typedef struct DemuxerConfig {

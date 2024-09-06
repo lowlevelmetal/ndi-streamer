@@ -21,6 +21,7 @@ namespace AV::Utils {
 
 class Decoder;
 using DecoderResult = std::pair<std::unique_ptr<Decoder>, const AvException>;
+using DecoderOutput = std::pair<AVFrame *, const AvException>;
 
 typedef struct DecoderConfig {
     AVCodecID codec_id{};
@@ -42,11 +43,16 @@ public:
     static DecoderResult Create(AVCodecID codec_id, AVCodecParameters *codecpar);
     static DecoderResult Create(const DecoderConfig &config);
 
+    // Decode frames
+    DecoderOutput Decode(AVPacket *packet);
+
+
 private:
     AvError m_Initialize();
 
     DecoderConfig m_config;
-    AVCodecContext *m_codec;
+    AVCodecContext *m_codec = nullptr;
+    AVFrame *m_last_frame = nullptr;
 };
 
 } // namespace AV::Utils

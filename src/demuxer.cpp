@@ -40,7 +40,7 @@ ReadFrameResult Demuxer::ReadFrame() {
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
     if (ret < 0) {
-        return {std::nullopt, AvException(AvError::READFRAME)};
+        return {nullptr, AvException(AvError::READFRAME)};
     }
 
     return {m_packet, AvException(AvError::NOERROR)};

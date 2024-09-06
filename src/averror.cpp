@@ -28,6 +28,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error setting dictionary";
     case AvError::READFRAME:
         return DEMUXSTR " Error reading frame";
+    case AvError::FRAMEALLOC:
+        return DEMUXSTR " Error allocating frame";
     case AvError::PACKETALLOC:
         return DEMUXSTR " Error allocating packet";
     case AvError::FINDSTREAMINFO:
@@ -38,6 +40,12 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error allocating decoder";
     case AvError::DECPARAMS:
         return DEMUXSTR " Error with codec parameters";
+    case AvError::SENDPACKET:
+        return DEMUXSTR " Error sending packet to decoder";
+    case AvError::RECIEVEFRAME:
+        return DEMUXSTR " Error receiving frame from decoder";
+    case AvError::DECODEREXHAUSTED:
+        return DEMUXSTR " Decoder is exhausted";
     default:
         return DEMUXSTR " Unknown error";
     }
