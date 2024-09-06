@@ -30,7 +30,9 @@ set(SOURCES
     src/averror.cpp
     src/demuxer.cpp
     src/decoder.cpp
-    src/pixelencoder.cpp)
+    src/pixelencoder.cpp
+    src/ndi.cpp
+    src/ndisender.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
