@@ -67,9 +67,7 @@ GetStreamResult Demuxer::GetStreams() {
  */
 ReadFrameResult Demuxer::ReadFrame() {
     // Reset the packet to default values
-    if (m_packet) {
-        av_packet_unref(m_packet);
-    }
+    av_packet_unref(m_packet);
 
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
