@@ -43,6 +43,11 @@ const int DemuxerException::code() const noexcept {
     return static_cast<int>(m_errcode);
 }
 
+/**
+ * @brief Read the next frame from the media file.
+ *
+ * @return ReadFrameResult
+ */
 ReadFrameResult Demuxer::ReadFrame() {
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
@@ -70,7 +75,7 @@ DemuxerResult Demuxer::Create(const std::string &path) {
         error = err;
     }
 
-    return {std::nullopt, error};
+    return {nullptr, error};
 }
 
 /**
@@ -90,7 +95,7 @@ DemuxerResult Demuxer::Create(const DemuxerConfig &config) {
         error = err;
     }
 
-    return {std::nullopt, error};
+    return {nullptr, error};
 }
 
 /**

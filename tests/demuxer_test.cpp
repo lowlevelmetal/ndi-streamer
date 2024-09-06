@@ -27,7 +27,7 @@ TEST(DemuxerTest, CreateDemuxerWithConfig) {
 
 TEST(DemuxerTest, ReadSingleFrame) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto [packet, packet_err] = demuxer.value()->ReadFrame();
+    auto [packet, packet_err] = demuxer->ReadFrame();
     EXPECT_EQ(packet_err.code(), 0);
 }
 
