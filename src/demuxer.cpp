@@ -28,6 +28,12 @@ const char *DemuxerException::what() const noexcept {
         return DEMUXSTR " No error";
     case DemuxerError::OPENINPUT:
         return DEMUXSTR " Error opening input";
+    case DemuxerError::AVDICTSET:
+        return DEMUXSTR " Error setting dictionary";
+    case DemuxerError::READFRAME:
+        return DEMUXSTR " Error reading frame";
+    case DemuxerError::PACKETALLOC:
+        return DEMUXSTR " Error allocating packet";
     default:
         return DEMUXSTR " Unknown error";
     }
@@ -35,6 +41,16 @@ const char *DemuxerException::what() const noexcept {
 
 const int DemuxerException::code() const noexcept {
     return static_cast<int>(m_errcode);
+}
+
+ReadFrameResult Demuxer::ReadFrame() {
+    // Read the next frame
+    int ret = av_read_frame(m_format_ctx, m_packet);
+    if (ret < 0) {
+        return {std::nullopt, DemuxerException(DemuxerError::READFRAME)};
+    }
+
+    return {m_packet, DemuxerException(DemuxerError::NOERROR)};
 }
 
 /**
@@ -115,6 +131,12 @@ Demuxer::Demuxer(const DemuxerConfig &config) : m_config(config) {
 Demuxer::~Demuxer() {
     DEBUG("Destructing Demuxer object");
 
+    // Free the packet
+    if (m_packet != nullptr) {
+        av_packet_free(&m_packet);
+        DEBUG("av_packet_free called");
+    }
+
     if (m_format_ctx != nullptr) {
         avformat_close_input(&m_format_ctx);
         DEBUG("avformat_close_input called");
@@ -140,7 +162,7 @@ DemuxerError Demuxer::m_InitializeAuto() {
         return DemuxerError::OPENINPUT;
     }
 
-    return DemuxerError::NOERROR;
+    return m_Initialize();
 }
 
 /**
@@ -152,12 +174,14 @@ DemuxerError Demuxer::m_InitializeWithConfig() {
     // Set the width and height if they are provided
     if (m_config.width && m_config.height) {
         DEBUG("Width: %d, Height: %d", m_config.width, m_config.height);
-        av_dict_set(&m_opts, "video_size", (std::to_string(m_config.width) + "x" + std::to_string(m_config.height)).c_str(), 0);
+        if(av_dict_set(&m_opts, "video_size", (std::to_string(m_config.width) + "x" + std::to_string(m_config.height)).c_str(), 0))
+            return DemuxerError::AVDICTSET;
     }
 
     if(!m_config.pixel_format.empty()) {
         DEBUG("Pixel format: %s", m_config.pixel_format.c_str());
-        av_dict_set(&m_opts, "pixel_format", m_config.pixel_format.c_str(), 0);
+        if(av_dict_set(&m_opts, "pixel_format", m_config.pixel_format.c_str(), 0))
+            return DemuxerError::AVDICTSET;
     }
 
     // This initializes the context and opens the file
@@ -165,6 +189,18 @@ DemuxerError Demuxer::m_InitializeWithConfig() {
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
         return DemuxerError::OPENINPUT;
+    }
+
+    return m_Initialize();
+}
+
+DemuxerError Demuxer::m_Initialize() {
+
+    // Create the packet
+    m_packet = av_packet_alloc();
+    if (!m_packet) {
+        DEBUG("av_packet_alloc failed");
+        return DemuxerError::PACKETALLOC;
     }
 
     return DemuxerError::NOERROR;

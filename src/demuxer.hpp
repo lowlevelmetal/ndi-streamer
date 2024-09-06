@@ -25,6 +25,7 @@ namespace AV::Utils {
 class Demuxer;
 class DemuxerException;
 using DemuxerResult = std::pair<std::optional<std::unique_ptr<Demuxer>>, const DemuxerException>;
+using ReadFrameResult = std::pair<std::optional<AVPacket*>, const DemuxerException>;
 
 typedef struct DemuxerConfig {
     std::string path;
@@ -37,7 +38,10 @@ typedef struct DemuxerConfig {
  */
 enum class DemuxerError {
     NOERROR,
-    OPENINPUT
+    OPENINPUT,
+    AVDICTSET,
+    READFRAME,
+    PACKETALLOC,
 };
 
 /**
@@ -71,13 +75,18 @@ public:
     static DemuxerResult Create(const std::string& path);
     static DemuxerResult Create(const DemuxerConfig& config);
 
+    // Read frames
+    ReadFrameResult ReadFrame();
+
 private:
     DemuxerError m_InitializeAuto();
     DemuxerError m_InitializeWithConfig();
+    DemuxerError m_Initialize(); // This is called by both other initialization methods
 
     DemuxerConfig m_config;
     AVFormatContext* m_format_ctx = nullptr;
     AVDictionary *m_opts = nullptr;
+    AVPacket *m_packet = nullptr;
 };
 
 } // namespace AV::Utils

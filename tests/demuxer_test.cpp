@@ -25,6 +25,12 @@ TEST(DemuxerTest, CreateDemuxerWithConfig) {
     EXPECT_EQ(demuxer_err.code(), 0);
 }
 
+TEST(DemuxerTest, ReadSingleFrame) {
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto [packet, packet_err] = demuxer.value()->ReadFrame();
+    EXPECT_EQ(packet_err.code(), 0);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
