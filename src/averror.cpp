@@ -32,6 +32,10 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error allocating packet";
     case AvError::FINDSTREAMINFO:
         return DEMUXSTR " Error finding stream info";
+    case AvError::FINDDECODER:
+        return DEMUXSTR " Error finding decoder";
+    case AvError::DECODERALLOC:
+        return DEMUXSTR " Error allocating decoder";
     default:
         return DEMUXSTR " Unknown error";
     }

@@ -10,6 +10,10 @@
 #include <string>
 #include <memory>
 
+extern "C" {
+    #include <libavcodec/avcodec.h>
+}
+
 #include "averror.hpp"
 #include "demuxer.hpp"
 
@@ -19,7 +23,7 @@ class Decoder;
 using DecoderResult = std::pair<std::unique_ptr<Decoder>, const AvException>;
 
 typedef struct DecoderConfig {
-    demuxerconfig demuxer_config{};
+    AVCodecID codec_id{};
 } decoderconfig, *pdecoderconfig;
 
 /**
@@ -27,23 +31,21 @@ typedef struct DecoderConfig {
  */
 class Decoder {
 private:
-    Decoder(const std::string &path);
+    Decoder(AVCodecID codec_id);
     Decoder(const DecoderConfig &config);
 
 public:
     ~Decoder();
 
     // Factory methods
-    static DecoderResult Create(const std::string &path);
+    static DecoderResult Create(AVCodecID codec_id);
     static DecoderResult Create(const DecoderConfig &config);
 
 private:
     AvError m_Initialize();
 
-    std::shared_ptr<Demuxer> m_demuxer;
-    decoderconfig m_config;
-
-
+    DecoderConfig m_config;
+    AVCodecContext *m_codec;
 };
 
 } // namespace AV::Utils

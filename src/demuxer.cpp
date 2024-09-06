@@ -53,6 +53,7 @@ ReadFrameResult Demuxer::ReadFrame() {
  * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, AvException>
  */
 DemuxerResult Demuxer::Create(const std::string &path) {
+    DEBUG("Demuxer factory called");
     AvException error(AvError::NOERROR);
 
     // Create a new demuxer object, return nullopt if error
@@ -73,6 +74,7 @@ DemuxerResult Demuxer::Create(const std::string &path) {
  * @return std::pair<std::optional<std::shared_ptr<Demuxer>>, AvException>
  */
 DemuxerResult Demuxer::Create(const DemuxerConfig &config) {
+    DEBUG("Demuxer factory called");
     AvException error(AvError::NOERROR);
 
     // Create a new demuxer object, return nullopt if error
@@ -140,6 +142,11 @@ Demuxer::~Demuxer() {
     }
 }
 
+/**
+ * @brief Initialize the demuxer
+ * 
+ * @return AvError
+ */
 AvError Demuxer::m_Initialize() {
 
     // Set the width and height if they are provided

@@ -21,6 +21,8 @@ enum class AvError {
     READFRAME,
     PACKETALLOC,
     FINDSTREAMINFO,
+    FINDDECODER,
+    DECODERALLOC,
 };
 
 /**

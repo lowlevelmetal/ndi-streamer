@@ -28,7 +28,8 @@ include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS})
 set(SOURCES
     src/ndi-streamer.cpp
     src/averror.cpp
-    src/demuxer.cpp)
+    src/demuxer.cpp
+    src/decoder.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
