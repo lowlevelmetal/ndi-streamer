@@ -10,13 +10,24 @@
 #include "decoder.hpp"
 
 TEST(DecoderTest, CreateDecoderSimple) {
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(AV_CODEC_ID_MPEG4);
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto streams = demuxer->GetStreams();
+
+    AVCodecID codec_id = streams[0]->codecpar->codec_id;
+    AVCodecParameters *codecpar = streams[0]->codecpar;
+
+    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codec_id, codecpar);
     EXPECT_EQ(decoder_err.code(), 0);
 }
 
 TEST(DecoderTest, CreateDecoderWithConfig) {
     AV::Utils::DecoderConfig config;
-    config.codec_id = AV_CODEC_ID_MPEG4;
+    
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto streams = demuxer->GetStreams();
+
+    config.codec_id = streams[0]->codecpar->codec_id;
+    config.codecpar = streams[0]->codecpar;
 
     auto [decoder, decoder_err] = AV::Utils::Decoder::Create(config);
     EXPECT_EQ(decoder_err.code(), 0);

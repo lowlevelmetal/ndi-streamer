@@ -23,6 +23,8 @@ enum class AvError {
     FINDSTREAMINFO,
     FINDDECODER,
     DECODERALLOC,
+    DECPARAMS,
+    
 };
 
 /**

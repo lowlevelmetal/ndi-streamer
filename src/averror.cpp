@@ -36,6 +36,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error finding decoder";
     case AvError::DECODERALLOC:
         return DEMUXSTR " Error allocating decoder";
+    case AvError::DECPARAMS:
+        return DEMUXSTR " Error with codec parameters";
     default:
         return DEMUXSTR " Unknown error";
     }
