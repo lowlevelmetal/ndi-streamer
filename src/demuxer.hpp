@@ -26,6 +26,12 @@ class Demuxer;
 class DemuxerException;
 using DemuxerResult = std::pair<std::optional<std::unique_ptr<Demuxer>>, const DemuxerException>;
 
+typedef struct DemuxerConfig {
+    std::string path;
+    int width, height;
+    std::string pixel_format;
+} demuxerconfig, *pdemuxerconfig;
+
 /**
  * @brief The DemuxerError enum class represents the possible errors that can occur when demuxing a media file.
  */
@@ -54,20 +60,24 @@ private:
 class Demuxer {
 private:
     Demuxer(const std::string &path); // I'm keeping the constructor private so that it can only be called by the factory method
+    Demuxer(const DemuxerConfig &config);
 
 public:
     ~Demuxer();
     Demuxer(const Demuxer&) = delete;
     Demuxer& operator=(const Demuxer&) = delete;
 
-    // Factory method
+    // Factory methods
     static DemuxerResult Create(const std::string& path);
+    static DemuxerResult Create(const DemuxerConfig& config);
 
 private:
-    DemuxerError m_Initialize();
+    DemuxerError m_InitializeAuto();
+    DemuxerError m_InitializeWithConfig();
 
-    std::string m_path;
+    DemuxerConfig m_config;
     AVFormatContext* m_format_ctx = nullptr;
+    AVDictionary *m_opts = nullptr;
 };
 
 } // namespace AV::Utils

@@ -23,4 +23,7 @@ include_directories(${FFMPEG_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ../src)
 
 target_link_libraries(demuxer_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 
+# Set up demuxer tests
 add_test(NAME demuxer_test COMMAND demuxer_test)
+add_test(NAME valgrind_demuxer_test
+         COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:demuxer_test>)

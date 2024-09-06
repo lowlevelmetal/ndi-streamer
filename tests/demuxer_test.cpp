@@ -9,8 +9,19 @@
 
 #include "demuxer.hpp"
 
-TEST(DemuxerTest, CreateDemuxer) {
+TEST(DemuxerTest, CreateDemuxerAuto) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    EXPECT_EQ(demuxer_err.code(), 0);
+}
+
+TEST(DemuxerTest, CreateDemuxerWithConfig) {
+    AV::Utils::DemuxerConfig config;
+    config.path = "testcontent/rickroll.mp4";
+    config.width = 1920;
+    config.height = 1080;
+    config.pixel_format = "yuv420p";
+
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(config);
     EXPECT_EQ(demuxer_err.code(), 0);
 }
 
