@@ -31,6 +31,20 @@ TEST(DemuxerTest, ReadSingleFrame) {
     EXPECT_EQ(packet_err.code(), 0);
 }
 
+TEST(DemuxerTest, ReadMultipleFrames) {
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto [packet, packet_err] = demuxer->ReadFrame();
+    EXPECT_EQ(packet_err.code(), 0);
+    auto [packet2, packet_err2] = demuxer->ReadFrame();
+    EXPECT_EQ(packet_err2.code(), 0);
+}
+
+TEST(DemuxerTest, GetStreams) {
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto streams = demuxer->GetStreams();
+    EXPECT_EQ(streams.size(), 2);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

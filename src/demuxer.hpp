@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <optional>
+#include <vector>
 
 // ffmpeg is a C library
 extern "C" {
@@ -26,6 +27,7 @@ class Demuxer;
 class DemuxerException;
 using DemuxerResult = std::pair<std::unique_ptr<Demuxer>, const DemuxerException>;
 using ReadFrameResult = std::pair<std::optional<AVPacket*>, const DemuxerException>;
+using GetStreamResult = std::vector<AVStream *>;
 
 typedef struct DemuxerConfig {
     std::string path;
@@ -42,6 +44,7 @@ enum class DemuxerError {
     AVDICTSET,
     READFRAME,
     PACKETALLOC,
+    FINDSTREAMINFO,
 };
 
 /**
@@ -77,6 +80,9 @@ public:
 
     // Read frames
     ReadFrameResult ReadFrame();
+
+    // Get stream information
+    GetStreamResult GetStreams();
 
 private:
     DemuxerError m_InitializeAuto();

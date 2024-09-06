@@ -34,6 +34,8 @@ const char *DemuxerException::what() const noexcept {
         return DEMUXSTR " Error reading frame";
     case DemuxerError::PACKETALLOC:
         return DEMUXSTR " Error allocating packet";
+    case DemuxerError::FINDSTREAMINFO:
+        return DEMUXSTR " Error finding stream info";
     default:
         return DEMUXSTR " Unknown error";
     }
@@ -44,11 +46,31 @@ const int DemuxerException::code() const noexcept {
 }
 
 /**
+ * @brief Get the streams from the media file.
+ * 
+ * @return GetStreamResult
+ */
+GetStreamResult Demuxer::GetStreams() {
+    std::vector<AVStream *> streams;
+
+    for (unsigned int i = 0; i < m_format_ctx->nb_streams; i++) {
+        streams.push_back(m_format_ctx->streams[i]);
+    }
+
+    return streams;
+}
+
+/**
  * @brief Read the next frame from the media file.
  *
  * @return ReadFrameResult
  */
 ReadFrameResult Demuxer::ReadFrame() {
+    // Reset the packet to default values
+    if (m_packet) {
+        av_packet_unref(m_packet);
+    }
+
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
     if (ret < 0) {
@@ -206,6 +228,13 @@ DemuxerError Demuxer::m_Initialize() {
     if (!m_packet) {
         DEBUG("av_packet_alloc failed");
         return DemuxerError::PACKETALLOC;
+    }
+
+    // Make sure the stream information is loaded into the format context
+    int ret = avformat_find_stream_info(m_format_ctx, nullptr);
+    if (ret < 0) {
+        DEBUG("avformat_find_stream_info failed");
+        return DemuxerError::FINDSTREAMINFO;
     }
 
     return DemuxerError::NOERROR;
