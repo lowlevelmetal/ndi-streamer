@@ -56,8 +56,9 @@ public:
     // Read frames
     ReadFrameResult ReadFrame();
 
-    // Get stream information
+    // Getters
     GetStreamResult GetStreams();
+
 
 private:
     AvError m_Initialize();

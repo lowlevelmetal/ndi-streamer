@@ -46,6 +46,14 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error receiving frame from decoder";
     case AvError::DECODEREXHAUSTED:
         return DEMUXSTR " Decoder is exhausted";
+    case AvError::SWSCONTEXT:
+        return DEMUXSTR " Error creating sws context";
+    case AvError::SWSSCALE:
+        return DEMUXSTR " Error scaling frame";
+    case AvError::AVMALLOC:
+        return DEMUXSTR " Error allocating memory";
+    case AvError::IMAGEFILLARRAYS:
+        return DEMUXSTR " Error filling image arrays";
     default:
         return DEMUXSTR " Unknown error";
     }

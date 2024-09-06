@@ -28,6 +28,10 @@ enum class AvError {
     SENDPACKET,
     RECIEVEFRAME,
     DECODEREXHAUSTED,
+    SWSCONTEXT,
+    SWSSCALE,
+    AVMALLOC,
+    IMAGEFILLARRAYS,
     
 };
 

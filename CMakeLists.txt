@@ -29,7 +29,8 @@ set(SOURCES
     src/ndi-streamer.cpp
     src/averror.cpp
     src/demuxer.cpp
-    src/decoder.cpp)
+    src/decoder.cpp
+    src/pixelencoder.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
