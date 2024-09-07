@@ -22,12 +22,18 @@ class PixelEncoder;
 using PixelEncoderResult = std::pair<std::unique_ptr<PixelEncoder>, const AvException>;
 using PixelEncoderOutput = std::pair<AVFrame *, const AvException>;
 
+/**
+ * @brief The PixelEncoderConfig struct represents the configuration for the PixelEncoder object.
+ */
 typedef struct PixelEncoderConfig {
     int src_width{}, src_height{};
     int dst_width{}, dst_height{};
     AVPixelFormat src_pix_fmt{}, dst_pix_fmt{};
 } pixelencoderconfig, *ppixelencoderconfig;
 
+/**
+ * @brief The PixelEncoder class represents an object that encodes frames.
+ */
 class PixelEncoder {
 private:
     PixelEncoder(const pixelencoderconfig &config);

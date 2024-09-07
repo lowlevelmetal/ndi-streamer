@@ -14,6 +14,12 @@ extern "C" {
 
 namespace AV::Utils {
 
+/**
+ * @brief Encode a frame
+ * 
+ * @param frame The frame to encode
+ * @return PixelEncoderOutput The encoded frame
+ */
 PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
     // Reset frame each time
     av_frame_unref(m_dst_frame);
@@ -43,6 +49,12 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }
 
+/**
+ * @brief Create a new PixelEncoder object
+ * 
+ * @param config The configuration for the PixelEncoder object
+ * @return PixelEncoderResult The PixelEncoder object
+ */
 PixelEncoderResult PixelEncoder::Create(const pixelencoderconfig &config) {
     DEBUG("PixelEncoder factory called");
     AvException error(AvError::NOERROR);
@@ -58,6 +70,11 @@ PixelEncoderResult PixelEncoder::Create(const pixelencoderconfig &config) {
     return {nullptr, error};
 }
 
+/**
+ * @brief Construct a new PixelEncoder object
+ * 
+ * @param config The configuration for the PixelEncoder object
+ */
 PixelEncoder::PixelEncoder(const pixelencoderconfig &config) : m_config(config) {
     DEBUG("Constructing PixelEncoder object");
 
@@ -67,6 +84,9 @@ PixelEncoder::PixelEncoder(const pixelencoderconfig &config) : m_config(config) 
     }
 }
 
+/**
+ * @brief Destroy the PixelEncoder object
+ */
 PixelEncoder::~PixelEncoder() {
     DEBUG("Destroying PixelEncoder object");
 
@@ -89,6 +109,11 @@ PixelEncoder::~PixelEncoder() {
     }
 }
 
+/**
+ * @brief Initialize the PixelEncoder object
+ * 
+ * @return AvError The error code
+ */
 AvError PixelEncoder::m_Initialize() {
     m_sws_ctx = sws_getContext(m_config.src_width, m_config.src_height, m_config.src_pix_fmt,
                                m_config.dst_width, m_config.dst_height, m_config.dst_pix_fmt,
@@ -98,11 +123,13 @@ AvError PixelEncoder::m_Initialize() {
         return AvError::SWSCONTEXT;
     }
 
+    // Lets create a frame to store the converted image
     m_dst_frame = av_frame_alloc();
     if (!m_dst_frame) {
         return AvError::FRAMEALLOC;
     }
 
+    // Allocate the buffer for the frame
     int buffersize = av_image_get_buffer_size(m_config.dst_pix_fmt, m_config.dst_width, m_config.dst_height, 1);
     m_dst_frame_buffer = (uint8_t *)av_malloc(buffersize);
     if (!m_dst_frame_buffer) {
