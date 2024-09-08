@@ -66,6 +66,10 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error creating NDI send instance";
     case AvError::NDIINVALIDPIXFMT:
         return DEMUXSTR " Invalid NDI pixel format";
+    case AvError::FRAMEGETBUFFER:
+        return DEMUXSTR " Error getting frame buffer";
+    case AvError::SWRCONFIG:
+        return DEMUXSTR " Error configuring frame";
     default:
         return DEMUXSTR " Unknown error";
     }

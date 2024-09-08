@@ -16,43 +16,68 @@ namespace AV::Utils {
 
 /**
  * @brief Resample the audio frame
- * 
+ *
  * @param src_frame The frame to resample
  */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
 
-    // Free pre alloced data pointers if needed
-    if(m_dst_frame->data[0]) {
-        DEBUG("Freeing data pointer 0");
-        av_freep(&m_dst_frame->data[0]);
-    }
+    DEBUG("Source Frame\n"
+          "Sample Rate: %d\n"
+          "Samples: %d\n"
+          "Channels: %d\n"
+          "Sample Format: %s\n",
+          src_frame->sample_rate, src_frame->nb_samples, m_src_nb_channels, av_get_sample_fmt_name((AVSampleFormat)src_frame->format));
 
-    // Reset frame to defaults
+    // Reset frame each time
     av_frame_unref(m_dst_frame);
 
-    // Calculate the number of samples
-    int nb_samples = av_rescale_rnd(swr_get_delay(m_swr_context, m_config.srcsamplerate) + src_frame->nb_samples, m_config.dstsamplerate, m_config.srcsamplerate, AV_ROUND_UP);
+    // Setup destination frame
+    m_dst_frame->ch_layout = m_config.dstchannellayout;
+    m_dst_frame->sample_rate = m_config.dstsamplerate;
+    m_dst_frame->format = m_config.dstsampleformat;
+    m_dst_frame->nb_samples = av_rescale_rnd(swr_get_delay(m_swr_context, m_config.srcsamplerate) + src_frame->nb_samples, m_config.dstsamplerate, m_config.srcsamplerate, AV_ROUND_UP);
 
-    // Initialize the frame
-    DEBUG("Allocating samples");
-    int ret = av_samples_alloc(m_dst_frame->data, m_dst_frame->linesize, m_dst_nb_channels, nb_samples, m_config.dstsampleformat, 0);
+    // Allocate the frame
+    int ret = av_frame_get_buffer(m_dst_frame, 0);
     if (ret < 0) {
-        return {nullptr, AvException(AvError::AVSAMPLESALLOC)};
+        return {nullptr, AvException(AvError::FRAMEALLOC)};
     }
 
-    // Convert the samples
-    DEBUG("Converting samples");
-    ret = swr_convert(m_swr_context, m_dst_frame->data, nb_samples, (const uint8_t **)src_frame->data, src_frame->nb_samples);
+    // Configure the context for the frames
+    ret = swr_config_frame(m_swr_context, m_dst_frame, src_frame);
     if (ret < 0) {
+#ifdef _DEBUG
+        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
+        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
+        DEBUG("swr_config_frame failed: %s", errbuf);
+#endif
+        return {nullptr, AvException(AvError::SWRCONFIG)};
+    }
+
+    // Resample the frame
+    ret = swr_convert_frame(m_swr_context, m_dst_frame, src_frame);
+    if (ret < 0) {
+#ifdef _DEBUG
+        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
+        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
+        DEBUG("swr_convert_frame failed: %s", errbuf);
+#endif
         return {nullptr, AvException(AvError::SWRCONVERT)};
     }
+
+    DEBUG("Resampled Frame\n"
+          "Sample Rate: %d\n"
+          "Samples: %d\n"
+          "Channels: %d\n"
+          "Sample Format: %s\n",
+          m_dst_frame->sample_rate, m_dst_frame->nb_samples, m_dst_nb_channels, av_get_sample_fmt_name((AVSampleFormat)m_dst_frame->format));
 
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }
 
 /**
  * @brief Create a new AudioResampler object
- * 
+ *
  * @param config The configuration for the AudioResampler object
  * @return AudioResamplerResult The AudioResampler object
  */
@@ -87,18 +112,12 @@ AudioResampler::AudioResampler(const AudioResamplerConfig &config) : m_config(co
 AudioResampler::~AudioResampler() {
     DEBUG("Destroying AudioResampler object");
 
-    // Free pre alloced data pointers if needed
-    if(m_dst_frame->data[0]) {
-        DEBUG("Freeing data pointer 0");
-        av_freep(&m_dst_frame->data[0]);
-    }
-
-    if(m_dst_frame) {
+    if (m_dst_frame) {
         DEBUG("Freeing frame");
         av_frame_free(&m_dst_frame);
     }
 
-    if(m_swr_context) {
+    if (m_swr_context) {
         DEBUG("Freeing swr context");
         swr_free(&m_swr_context);
     }
@@ -106,7 +125,7 @@ AudioResampler::~AudioResampler() {
 
 /**
  * @brief Initialize the audio resampler
- * 
+ *
  * @return AvError
  */
 AvError AudioResampler::m_Initialize() {
@@ -128,6 +147,18 @@ AvError AudioResampler::m_Initialize() {
 
     av_opt_set_sample_fmt(m_swr_context, "in_sample_fmt", m_config.srcsampleformat, 0);
     av_opt_set_sample_fmt(m_swr_context, "out_sample_fmt", m_config.dstsampleformat, 0);
+
+    DEBUG("Source Config\n"
+          "Sample Rate: %d\n"
+          "Channels: %d\n"
+          "Sample Format: %s\n",
+          m_config.srcsamplerate, m_src_nb_channels, av_get_sample_fmt_name(m_config.srcsampleformat));
+
+    DEBUG("Destination Config\n"
+          "Sample Rate: %d\n"
+          "Channels: %d\n"
+          "Sample Format: %s\n",
+          m_config.dstsamplerate, m_dst_nb_channels, av_get_sample_fmt_name(m_config.dstsampleformat));
 
     int ret = swr_init(m_swr_context);
     if (ret < 0) {

@@ -22,6 +22,12 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
         return AvException(AvError::NDIINVALIDPIXFMT);
     }
 
+    DEBUG("Sending Video Frame\n"
+          "Width: %d\n"
+          "Height: %d\n"
+          "Framerate: %d/%d\n",
+          frame->width, frame->height, framerate.first, framerate.second);
+
     //video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
@@ -31,6 +37,27 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     video_frame.line_stride_in_bytes = frame->linesize[0];
 
     NDIlib_send_send_video_v2(m_send_instance, &video_frame);
+
+    return AvException(AvError::NOERROR);
+}
+
+AvException NdiSource::SendAudioFrame(AVFrame *frame) {
+    // Setup the audio frame
+    NDIlib_audio_frame_v2_t audio_frame;
+
+    DEBUG("Sending audio frame\n"
+          "Sample rate: %d\n"
+          "Channels: %d\n"
+          "Samples: %d\n",
+          frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples);
+
+    audio_frame.sample_rate = frame->sample_rate;
+    audio_frame.no_channels = frame->ch_layout.nb_channels;
+    audio_frame.no_samples = frame->nb_samples;
+    audio_frame.timecode = NDIlib_send_timecode_synthesize;
+    audio_frame.p_data = (float*)frame->data[0];
+
+    NDIlib_send_send_audio_v2(m_send_instance, &audio_frame);
 
     return AvException(AvError::NOERROR);
 }

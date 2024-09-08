@@ -37,9 +37,9 @@ TEST(AudioResamplerTest, CreateAudioResamplerSimple) {
     resampler_config.srcsamplerate = frame->sample_rate;
     resampler_config.dstsamplerate = frame->sample_rate;
     resampler_config.srcchannellayout = frame->ch_layout;
-    av_channel_layout_from_mask(&resampler_config.dstchannellayout, AV_CH_LAYOUT_STEREO);
+    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     resampler_config.srcsampleformat = (AVSampleFormat)frame->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
+    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
 
     auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
     EXPECT_EQ(resampler_err.code(), 0);
@@ -71,13 +71,16 @@ TEST(AudioResamplerTest, ResampleSingleFrame) {
     resampler_config.srcsamplerate = frame->sample_rate;
     resampler_config.dstsamplerate = frame->sample_rate;
     resampler_config.srcchannellayout = frame->ch_layout;
-    av_channel_layout_from_mask(&resampler_config.dstchannellayout, AV_CH_LAYOUT_STEREO);
+    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     resampler_config.srcsampleformat = (AVSampleFormat)frame->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
+    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
 
     auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
     auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
     EXPECT_EQ(resampled_frame_err.code(), 0);
+    EXPECT_EQ(resampled_frame->sample_rate, frame->sample_rate);
+    EXPECT_EQ(resampled_frame->ch_layout.nb_channels, 2);
+    EXPECT_EQ(resampled_frame->format, resampler_config.dstsampleformat);
 }
 
 TEST(AudioResamplerTest, ResampleMultipleFrames) {
@@ -95,9 +98,9 @@ TEST(AudioResamplerTest, ResampleMultipleFrames) {
     resampler_config.srcsamplerate = streams[1]->codecpar->sample_rate;
     resampler_config.dstsamplerate = 48000;
     resampler_config.srcchannellayout = streams[1]->codecpar->ch_layout;
-    av_channel_layout_from_mask(&resampler_config.dstchannellayout, AV_CH_LAYOUT_STEREO);
+    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     resampler_config.srcsampleformat = (AVSampleFormat)streams[1]->codecpar->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
+    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
 
     auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
 

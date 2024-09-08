@@ -9,6 +9,7 @@
 
 #include "ndisource.hpp"
 #include "pixelencoder.hpp"
+#include "audioresampler.hpp"
 #include "demuxer.hpp"
 #include "decoder.hpp"
 
@@ -55,6 +56,47 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
         auto [frame, frame_err] = decoder->Decode(pkt);
         auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
         auto send_err = ndisource->SendVideoFrame(encoded_frame, decoder->GetFrameRate(), encoder->GetPixelFormat());
+        EXPECT_EQ(send_err.code(), 0);
+    }
+}
+
+TEST(NdiSourceTest, SendNdiAudioFrame) {
+    // Create demuxer
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
+    auto streams = demuxer->GetStreams();
+
+    // Create decoder
+    auto codecpar = streams[1]->codecpar;
+    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
+
+    // Create sample format encoder
+    AV::Utils::AudioResamplerConfig resampler_config;
+    resampler_config.srcsamplerate = streams[1]->codecpar->sample_rate;
+    resampler_config.dstsamplerate = 48000;
+    resampler_config.srcchannellayout = streams[1]->codecpar->ch_layout;
+    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
+    resampler_config.srcsampleformat = (AVSampleFormat)streams[1]->codecpar->format;
+    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
+    auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
+
+    // Create NDI source
+    auto [ndisource, ndisource_err] = AV::Utils::NdiSource::Create("Test NDI Source");
+
+    // Decode frames and send to NDI
+    for (int i = 0; i < 3; i++) {
+        // Grab correct packet
+        AVPacket *pkt = nullptr;
+        do {
+            auto [packet, packet_err] = demuxer->ReadFrame();
+            if (packet->stream_index == 1) {
+                pkt = packet;
+            }
+
+        } while(pkt == nullptr);
+
+        auto [frame, frame_err] = decoder->Decode(pkt);
+        auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
+        auto send_err = ndisource->SendAudioFrame(resampled_frame);
         EXPECT_EQ(send_err.code(), 0);
     }
 }

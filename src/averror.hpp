@@ -38,6 +38,8 @@ enum class AvError {
     SWRCONVERT,
     NDISENDINSTANCE,
     NDIINVALIDPIXFMT,
+    FRAMEGETBUFFER,
+    SWRCONFIG,
 };
 
 /**
