@@ -55,6 +55,8 @@ TEST(PixelEncoderTest, EncodeSingleFrame) {
     auto [encoder, encoder_err] = AV::Utils::PixelEncoder::Create(config);
     auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
     EXPECT_EQ(encoded_frame_err.code(), 0);
+    EXPECT_EQ(encoded_frame->width, frame->width);
+    EXPECT_EQ(encoded_frame->height, frame->height);
 }
 
 TEST(PixelEncoderTest, EncodeMultipleFrames) {
@@ -90,6 +92,8 @@ TEST(PixelEncoderTest, EncodeMultipleFrames) {
         
         auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
         EXPECT_EQ(encoded_frame_err.code(), 0);
+        EXPECT_EQ(encoded_frame->width, 1920);
+        EXPECT_EQ(encoded_frame->height, 1080);
     }
 }
 

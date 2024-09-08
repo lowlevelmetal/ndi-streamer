@@ -15,7 +15,7 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     NDIlib_video_frame_v2_t video_frame;
 
     switch (format) {
-    case AV_PIX_FMT_YUV422P:
+    case AV_PIX_FMT_UYVY422:
         video_frame.FourCC = NDIlib_FourCC_type_UYVY;
         break;
     default:
@@ -28,7 +28,7 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
           "Framerate: %d/%d\n",
           frame->width, frame->height, framerate.first, framerate.second);
 
-    //video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+    video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
     video_frame.frame_rate_N = framerate.first;
