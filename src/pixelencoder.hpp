@@ -47,6 +47,9 @@ public:
     // Encode frames
     PixelEncoderOutput Encode(AVFrame *frame);
 
+    // Get configured pixel format
+    AVPixelFormat GetPixelFormat();
+
 private:
     AvError m_Initialize();
 

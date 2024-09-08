@@ -64,6 +64,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error converting samples";
     case AvError::NDISENDINSTANCE:
         return DEMUXSTR " Error creating NDI send instance";
+    case AvError::NDIINVALIDPIXFMT:
+        return DEMUXSTR " Invalid NDI pixel format";
     default:
         return DEMUXSTR " Unknown error";
     }

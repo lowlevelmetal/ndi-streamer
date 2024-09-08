@@ -14,6 +14,10 @@ extern "C" {
 
 namespace AV::Utils {
 
+AVPixelFormat PixelEncoder::GetPixelFormat() {
+    return m_config.dst_pix_fmt;
+}
+
 /**
  * @brief Encode a frame
  * 

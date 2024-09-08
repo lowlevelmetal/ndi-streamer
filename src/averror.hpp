@@ -37,6 +37,7 @@ enum class AvError {
     AVSAMPLESALLOC,
     SWRCONVERT,
     NDISENDINSTANCE,
+    NDIINVALIDPIXFMT,
 };
 
 /**

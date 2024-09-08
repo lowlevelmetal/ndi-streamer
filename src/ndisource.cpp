@@ -10,6 +10,31 @@
 
 namespace AV::Utils {
 
+AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format) {
+    // Setup the video frame
+    NDIlib_video_frame_v2_t video_frame;
+
+    switch (format) {
+    case AV_PIX_FMT_YUV422P:
+        video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+        break;
+    default:
+        return AvException(AvError::NDIINVALIDPIXFMT);
+    }
+
+    //video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+    video_frame.xres = frame->width;
+    video_frame.yres = frame->height;
+    video_frame.frame_rate_N = framerate.first;
+    video_frame.frame_rate_D = framerate.second;
+    video_frame.p_data = frame->data[0];
+    video_frame.line_stride_in_bytes = frame->linesize[0];
+
+    NDIlib_send_send_video_v2(m_send_instance, &video_frame);
+
+    return AvException(AvError::NOERROR);
+}
+
 NdiSourceResult NdiSource::Create(const std::string &ndi_name) {
     DEBUG("NdiSource factory called");
     AvException error(AvError::NOERROR);

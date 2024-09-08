@@ -22,6 +22,7 @@ namespace AV::Utils {
 class Decoder;
 using DecoderResult = std::pair<std::unique_ptr<Decoder>, const AvException>;
 using DecoderOutput = std::pair<AVFrame *, const AvException>;
+using CodecFrameRate = std::pair<int, int>;
 
 /**
  * @brief The Decoder class provides utilities for decoding media files.
@@ -39,6 +40,8 @@ public:
     // Decode frames
     DecoderOutput Decode(AVPacket *packet);
 
+    // Get framerate from context
+    CodecFrameRate GetFrameRate();
 
 private:
     AvError m_Initialize();

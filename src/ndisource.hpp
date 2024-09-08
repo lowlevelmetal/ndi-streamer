@@ -11,9 +11,11 @@
 
 #include "ndi.hpp"
 #include "averror.hpp"
+#include "decoder.hpp"
 
 extern "C" {
 #include <libavutil/frame.h>
+#include <libavcodec/avcodec.h>
 }
 
 namespace AV::Utils {
@@ -30,7 +32,7 @@ public:
 
     static NdiSourceResult Create(const std::string &ndi_name);
 
-    AvException SendVideoFrame(AVFrame *frame);
+    AvException SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format);
     AvException SendAudioFrame(AVFrame *frame);
 
 private:
