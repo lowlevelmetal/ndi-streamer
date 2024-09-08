@@ -14,6 +14,11 @@ extern "C" {
 
 namespace AV::Utils {
 
+/**
+ * @brief Resample the audio frame
+ * 
+ * @param src_frame The frame to resample
+ */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
 
     // Free pre alloced data pointers if needed
@@ -45,6 +50,12 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }
 
+/**
+ * @brief Create a new AudioResampler object
+ * 
+ * @param config The configuration for the AudioResampler object
+ * @return AudioResamplerResult The AudioResampler object
+ */
 AudioResamplerResult AudioResampler::Create(const AudioResamplerConfig &config) {
     DEBUG("AudioResampler factory called");
     AvException error(AvError::NOERROR);
@@ -59,6 +70,9 @@ AudioResamplerResult AudioResampler::Create(const AudioResamplerConfig &config) 
     return {nullptr, error};
 }
 
+/**
+ * @brief Construct a new AudioResampler object
+ */
 AudioResampler::AudioResampler(const AudioResamplerConfig &config) : m_config(config) {
     DEBUG("Constructing AudioResampler object");
     AvError err = m_Initialize();
@@ -67,6 +81,9 @@ AudioResampler::AudioResampler(const AudioResamplerConfig &config) : m_config(co
     }
 }
 
+/**
+ * @brief Destroy the AudioResampler object
+ */
 AudioResampler::~AudioResampler() {
     DEBUG("Destroying AudioResampler object");
 
@@ -87,6 +104,11 @@ AudioResampler::~AudioResampler() {
     }
 }
 
+/**
+ * @brief Initialize the audio resampler
+ * 
+ * @return AvError
+ */
 AvError AudioResampler::m_Initialize() {
     m_swr_context = swr_alloc();
     if (!m_swr_context) {
