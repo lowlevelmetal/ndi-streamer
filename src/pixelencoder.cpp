@@ -25,21 +25,8 @@ AVPixelFormat PixelEncoder::GetPixelFormat() {
  * @return PixelEncoderOutput The encoded frame
  */
 PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
-    // Free the frame buffer
-    if (m_dst_frame_buffer) {
-        av_free(m_dst_frame_buffer);
-        DEBUG("av_free called");
-    }
-
     // Reset frame each time
     av_frame_unref(m_dst_frame);
-
-    // Allocate the buffer for the frame
-    int buffersize = av_image_get_buffer_size(m_config.dst_pix_fmt, m_config.dst_width, m_config.dst_height, 1);
-    m_dst_frame_buffer = (uint8_t *)av_malloc(buffersize);
-    if (!m_dst_frame_buffer) {
-        return {nullptr, AvException(AvError::AVMALLOC)};
-    }
 
     // Setup the frame
     int ret = av_image_fill_arrays(m_dst_frame->data, m_dst_frame->linesize, m_dst_frame_buffer, m_config.dst_pix_fmt, m_config.dst_width, m_config.dst_height, 1);
@@ -52,7 +39,7 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
         return {nullptr, AvException(AvError::IMAGEFILLARRAYS)};
     }
 
-    // Complete frame
+    // Complete the frame
     m_dst_frame->width = m_config.dst_width;
     m_dst_frame->height = m_config.dst_height;
     m_dst_frame->format = m_config.dst_pix_fmt;
@@ -149,6 +136,13 @@ AvError PixelEncoder::m_Initialize() {
     m_dst_frame = av_frame_alloc();
     if (!m_dst_frame) {
         return AvError::FRAMEALLOC;
+    }
+
+    // Allocate the buffer for the frame
+    int buffersize = av_image_get_buffer_size(m_config.dst_pix_fmt, m_config.dst_width, m_config.dst_height, 1);
+    m_dst_frame_buffer = (uint8_t *)av_malloc(buffersize);
+    if (!m_dst_frame_buffer) {
+        return AvError::AVMALLOC;
     }
 
     return AvError::NOERROR;

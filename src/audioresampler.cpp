@@ -21,12 +21,12 @@ namespace AV::Utils {
  */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
 
-    DEBUG("Source Frame\n"
+    /*DEBUG("Source Frame\n"
           "Sample Rate: %d\n"
           "Samples: %d\n"
           "Channels: %d\n"
           "Sample Format: %s\n",
-          src_frame->sample_rate, src_frame->nb_samples, m_src_nb_channels, av_get_sample_fmt_name((AVSampleFormat)src_frame->format));
+          src_frame->sample_rate, src_frame->nb_samples, m_src_nb_channels, av_get_sample_fmt_name((AVSampleFormat)src_frame->format));*/
 
     // Reset frame each time
     av_frame_unref(m_dst_frame);
@@ -65,12 +65,12 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
         return {nullptr, AvException(AvError::SWRCONVERT)};
     }
 
-    DEBUG("Resampled Frame\n"
+    /*DEBUG("Resampled Frame\n"
           "Sample Rate: %d\n"
           "Samples: %d\n"
           "Channels: %d\n"
           "Sample Format: %s\n",
-          m_dst_frame->sample_rate, m_dst_frame->nb_samples, m_dst_nb_channels, av_get_sample_fmt_name((AVSampleFormat)m_dst_frame->format));
+          m_dst_frame->sample_rate, m_dst_frame->nb_samples, m_dst_nb_channels, av_get_sample_fmt_name((AVSampleFormat)m_dst_frame->format));*/
 
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }

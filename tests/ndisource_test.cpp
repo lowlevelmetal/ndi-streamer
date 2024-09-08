@@ -35,7 +35,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
     encoder_config.src_pix_fmt = (AVPixelFormat)streams[0]->codecpar->format;
     encoder_config.dst_width = streams[0]->codecpar->width;
     encoder_config.dst_height = streams[0]->codecpar->height;
-    encoder_config.dst_pix_fmt = AV_PIX_FMT_YUV422P;
+    encoder_config.dst_pix_fmt = AV_PIX_FMT_UYVY422;
     auto [encoder, encoder_err] = AV::Utils::PixelEncoder::Create(encoder_config);
 
     // Create NDI source
