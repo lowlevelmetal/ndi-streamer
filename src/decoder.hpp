@@ -23,25 +23,18 @@ class Decoder;
 using DecoderResult = std::pair<std::unique_ptr<Decoder>, const AvException>;
 using DecoderOutput = std::pair<AVFrame *, const AvException>;
 
-typedef struct DecoderConfig {
-    AVCodecID codec_id{};
-    AVCodecParameters *codecpar{};
-} decoderconfig, *pdecoderconfig;
-
 /**
  * @brief The Decoder class provides utilities for decoding media files.
  */
 class Decoder {
 private:
-    Decoder(AVCodecID codec_id, AVCodecParameters *codecpar);
-    Decoder(const DecoderConfig &config);
+    Decoder(AVCodecParameters *codecpar);
 
 public:
     ~Decoder();
 
     // Factory methods
-    static DecoderResult Create(AVCodecID codec_id, AVCodecParameters *codecpar);
-    static DecoderResult Create(const DecoderConfig &config);
+    static DecoderResult Create(AVCodecParameters *codecpar);
 
     // Decode frames
     DecoderOutput Decode(AVPacket *packet);
@@ -50,7 +43,7 @@ public:
 private:
     AvError m_Initialize();
 
-    DecoderConfig m_config;
+    AVCodecParameters *m_codecpar = nullptr;
     AVCodecContext *m_codec = nullptr;
     AVFrame *m_last_frame = nullptr;
 };

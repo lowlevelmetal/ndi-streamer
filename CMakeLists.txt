@@ -31,6 +31,7 @@ set(SOURCES
     src/demuxer.cpp
     src/decoder.cpp
     src/pixelencoder.cpp
+    src/audioresampler.cpp
     src/ndi.cpp
     src/ndisender.cpp)
 

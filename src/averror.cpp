@@ -54,6 +54,14 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error allocating memory";
     case AvError::IMAGEFILLARRAYS:
         return DEMUXSTR " Error filling image arrays";
+    case AvError::SWRALLOCS:
+        return DEMUXSTR " Error allocating swr context";
+    case AvError::SWRINIT:
+        return DEMUXSTR " Error initializing swr context";
+    case AvError::AVSAMPLESALLOC:
+        return DEMUXSTR " Error allocating samples";
+    case AvError::SWRCONVERT:
+        return DEMUXSTR " Error converting samples";
     default:
         return DEMUXSTR " Unknown error";
     }

@@ -52,37 +52,16 @@ DecoderOutput Decoder::Decode(AVPacket *pkt) {
 /**
  * @brief Create a Decoder object
  *
- * @param codec_id codec ID
+ * @param codecpar codec parameters
  * @return DecoderResult
  */
-DecoderResult Decoder::Create(AVCodecID codec_id, AVCodecParameters *codecpar) {
+DecoderResult Decoder::Create(AVCodecParameters *codecpar) {
     DEBUG("Decoder factory called");
     AvException error(AvError::NOERROR);
 
     // Create a new decoder object, return nullopt if error
     try {
-        return {std::unique_ptr<Decoder>(new Decoder(codec_id, codecpar)), error};
-    } catch (AvException e) {
-        error = e;
-        DEBUG("Decoder error: %s", error.what());
-    }
-
-    return {nullptr, error};
-}
-
-/**
- * @brief Create a Decoder object
- *
- * @param config decoder configuration
- * @return DecoderResult
- */
-DecoderResult Decoder::Create(const DecoderConfig &config) {
-    DEBUG("Decoder factory called");
-    AvException error(AvError::NOERROR);
-
-    // Create a new decoder object, return nullopt if error
-    try {
-        return {std::unique_ptr<Decoder>(new Decoder(config)), error};
+        return {std::unique_ptr<Decoder>(new Decoder(codecpar)), error};
     } catch (AvException e) {
         error = e;
         DEBUG("Decoder error: %s", error.what());
@@ -96,24 +75,7 @@ DecoderResult Decoder::Create(const DecoderConfig &config) {
  *
  * @param codec_id codec ID
  */
-Decoder::Decoder(AVCodecID codec_id, AVCodecParameters *codecpar) {
-    DEBUG("Constructing Decoder object");
-
-    m_config.codec_id = codec_id;
-    m_config.codecpar = codecpar;
-
-    AvError err = m_Initialize();
-    if (err != AvError::NOERROR) {
-        throw err;
-    }
-}
-
-/**
- * @brief Construct a new Decoder:: Decoder object
- *
- * @param config decoder configuration
- */
-Decoder::Decoder(const DecoderConfig &config) : m_config(config) {
+Decoder::Decoder(AVCodecParameters *codecpar) : m_codecpar(codecpar) {
     DEBUG("Constructing Decoder object");
 
     AvError err = m_Initialize();
@@ -121,6 +83,7 @@ Decoder::Decoder(const DecoderConfig &config) : m_config(config) {
         throw err;
     }
 }
+
 
 /**
  * @brief Destroy the Decoder:: Decoder object
@@ -149,7 +112,7 @@ Decoder::~Decoder() {
 AvError Decoder::m_Initialize() {
 
     // Find the appropriate decoder
-    const AVCodec *codec = avcodec_find_decoder(m_config.codec_id);
+    const AVCodec *codec = avcodec_find_decoder(m_codecpar->codec_id);
     if (!codec) {
         DEBUG("avcodec_find_decoder failed");
         return AvError::FINDDECODER;
@@ -163,7 +126,7 @@ AvError Decoder::m_Initialize() {
     }
 
     // Copy the codec parameters
-    if (avcodec_parameters_to_context(m_codec, m_config.codecpar) < 0) {
+    if (avcodec_parameters_to_context(m_codec, m_codecpar) < 0) {
         DEBUG("avcodec_parameters_to_context failed");
         return AvError::DECPARAMS;
     }

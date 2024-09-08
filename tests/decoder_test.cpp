@@ -13,34 +13,20 @@ TEST(DecoderTest, CreateDecoderSimple) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto streams = demuxer->GetStreams();
 
-    AVCodecID codec_id = streams[0]->codecpar->codec_id;
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codec_id, codecpar);
+    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
     EXPECT_EQ(decoder_err.code(), 0);
 }
 
-TEST(DecoderTest, CreateDecoderWithConfig) {
-    AV::Utils::DecoderConfig config;
-    
-    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
-
-    config.codec_id = streams[0]->codecpar->codec_id;
-    config.codecpar = streams[0]->codecpar;
-
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(config);
-    EXPECT_EQ(decoder_err.code(), 0);
-}
 
 TEST(DecoderTest, DecodeSinglePacket) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto streams = demuxer->GetStreams();
 
-    AVCodecID codec_id = streams[0]->codecpar->codec_id;
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codec_id, codecpar);
+    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
     
     // Grab correct packet
     AVPacket *pkt = nullptr;
@@ -60,10 +46,9 @@ TEST(DecoderTest, DecodeMultiplePackets) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto streams = demuxer->GetStreams();
 
-    AVCodecID codec_id = streams[0]->codecpar->codec_id;
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codec_id, codecpar);
+    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
     
     for (int i = 0; i < 3; i++) {
         // Grab correct packet

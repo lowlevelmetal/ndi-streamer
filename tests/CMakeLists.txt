@@ -18,16 +18,19 @@ find_package(GTest REQUIRED)
 add_executable(demuxer_test demuxer_test.cpp ../src/demuxer.cpp ../src/averror.cpp)
 add_executable(decoder_test decoder_test.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(pixelencoder_test pixelencoder_test.cpp ../src/pixelencoder.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
+add_executable(audioresampler_test audioresampler_test.cpp ../src/audioresampler.cpp ../src/averror.cpp ../src/decoder ../src/demuxer.cpp)
 
 add_dependencies(demuxer_test download_video)
 add_dependencies(decoder_test download_video)
 add_dependencies(pixelencoder_test download_video)
+add_dependencies(audioresampler_test download_video)
 
 include_directories(${FFMPEG_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ../src)
 
 target_link_libraries(demuxer_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(decoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(pixelencoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
+target_link_libraries(audioresampler_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 
 # Set up demuxer tests
 add_test(NAME demuxer_test COMMAND demuxer_test)
@@ -43,3 +46,8 @@ add_test(NAME valgrind_decoder_test
 add_test(NAME pixelencoder_test COMMAND pixelencoder_test)
 add_test(NAME valgrind_pixelencoder_test
          COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:pixelencoder_test>)
+
+# Set up audioresampler tests
+add_test(NAME audioresampler_test COMMAND audioresampler_test)
+add_test(NAME valgrind_audioresampler_test
+         COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:audioresampler_test>)

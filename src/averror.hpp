@@ -32,6 +32,10 @@ enum class AvError {
     SWSSCALE,
     AVMALLOC,
     IMAGEFILLARRAYS,
+    SWRALLOCS,
+    SWRINIT,
+    AVSAMPLESALLOC,
+    SWRCONVERT
     
 };
 
