@@ -9,6 +9,7 @@
 
 // Standard includes
 #include <cstdlib> // Needed for NDI SDK
+#include <string>
 
 // NDI SDK
 #include <Processing.NDI.Lib.h>

@@ -16,6 +16,7 @@ namespace AV::Utils {
         DEBUG("Ndi constructor called");
 
         if(!m_open_instances) {
+            DEBUG("NDI library has not been initialized yet, initializing now");
             NDIlib_initialize();
         }
 
@@ -28,6 +29,7 @@ namespace AV::Utils {
         m_open_instances--;
 
         if(!m_open_instances) {
+            DEBUG("No more NDI instances open, deinitializing NDI library");
             NDIlib_destroy();
         }
     }

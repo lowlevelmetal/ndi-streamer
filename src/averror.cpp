@@ -62,6 +62,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error allocating samples";
     case AvError::SWRCONVERT:
         return DEMUXSTR " Error converting samples";
+    case AvError::NDISENDINSTANCE:
+        return DEMUXSTR " Error creating NDI send instance";
     default:
         return DEMUXSTR " Unknown error";
     }

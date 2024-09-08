@@ -35,8 +35,8 @@ enum class AvError {
     SWRALLOCS,
     SWRINIT,
     AVSAMPLESALLOC,
-    SWRCONVERT
-    
+    SWRCONVERT,
+    NDISENDINSTANCE,
 };
 
 /**
