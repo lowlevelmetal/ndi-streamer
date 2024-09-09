@@ -53,6 +53,12 @@ Then run the automated tests
 ctest
 ```
 
+## Common Problems
+### Can't find NDI header files or binaries
+Make sure you have installed the NDI SDK in your /opt/ directory
+### Can't see my NDI source on the network
+Make sure you have the avahi service daemon running on your host machine
+
 ## Mission
 
 Develop a lightweight, versatile tool capable of decoding both audio and video content, with potential cross-platform functionality, enabling seamless streaming via NDI.
