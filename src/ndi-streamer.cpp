@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
     std::cin.get();
 #endif
 
+    // Main loop
     while(1) {
         auto err = ndiavserver->ProcessNextFrame();
         if (err.code() != (int)AV::Utils::AvError::NOERROR) {

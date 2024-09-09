@@ -30,11 +30,7 @@ DecoderOutput Decoder::Decode(AVPacket *pkt) {
     if (ret == 0) {
         ret = avcodec_send_packet(m_codec, pkt);
         if (ret < 0) {
-#ifdef _DEBUG
-            char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-            av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-            DEBUG("avcodec_send_packet failed: %s", errbuf);
-#endif
+            PRINT_FFMPEG_ERR(ret);
             return {nullptr, AvException(AvError::SENDPACKET)};
         }
     }

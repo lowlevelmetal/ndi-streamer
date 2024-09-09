@@ -31,11 +31,7 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
     // Setup the frame
     int ret = av_image_fill_arrays(m_dst_frame->data, m_dst_frame->linesize, m_dst_frame_buffer, m_config.dst_pix_fmt, m_config.dst_width, m_config.dst_height, 1);
     if (ret < 0) {
-#ifdef _DEBUG
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-        DEBUG("av_image_fill_arrays failed: %s", errbuf);
-#endif
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::IMAGEFILLARRAYS)};
     }
 
@@ -47,11 +43,7 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
     // Scale the frame
     ret = sws_scale(m_sws_ctx, frame->data, frame->linesize, 0, m_config.src_height, m_dst_frame->data, m_dst_frame->linesize);
     if (ret < 0) {
-#ifdef _DEBUG
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-        DEBUG("sws_scale failed: %s", errbuf);
-#endif
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWSSCALE)};
     }
 
