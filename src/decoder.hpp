@@ -38,7 +38,8 @@ public:
     static DecoderResult Create(AVCodecParameters *codecpar);
 
     // Decode frames
-    DecoderOutput Decode(AVPacket *packet);
+    AvException FillDecoder(AVPacket *packet);
+    DecoderOutput Decode();
 
     // Get framerate from context
     CodecFrameRate GetFrameRate();

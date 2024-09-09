@@ -169,6 +169,7 @@ AvError Demuxer::m_Initialize() {
     int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, &m_opts);
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::OPENINPUT;
     }
 
@@ -183,6 +184,7 @@ AvError Demuxer::m_Initialize() {
     ret = avformat_find_stream_info(m_format_ctx, nullptr);
     if (ret < 0) {
         DEBUG("avformat_find_stream_info failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::FINDSTREAMINFO;
     }
 

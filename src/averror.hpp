@@ -49,6 +49,7 @@ enum class AvError {
 class AvException : public std::exception {
 public:
     AvException(AvError errcode);
+    AvException();
 
     const char *what() const noexcept override;
     const int code() const noexcept;

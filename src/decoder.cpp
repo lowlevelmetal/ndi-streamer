@@ -15,33 +15,36 @@ CodecFrameRate Decoder::GetFrameRate() {
 }
 
 /**
- * @brief Decode a packet
+ * @brief Fill the decoder with a packet
  *
- * @param pkt packet to decode
- * @return DecoderOutput
+ * @param packet The packet to fill the decoder with
+ * @return AvException
  */
-DecoderOutput Decoder::Decode(AVPacket *pkt) {
-    static int ret = 0;
-
-    // Reset the frame to default settings every call
-    av_frame_unref(m_last_frame);
-
-    // If we need to fill the decoder, fill it
-    if (ret == 0) {
-        ret = avcodec_send_packet(m_codec, pkt);
-        if (ret < 0) {
-            PRINT_FFMPEG_ERR(ret);
-            return {nullptr, AvException(AvError::SENDPACKET)};
-        }
+AvException Decoder::FillDecoder(AVPacket *packet) {
+    int ret = avcodec_send_packet(m_codec, packet);
+    if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
+        return AvException(AvError::SENDPACKET);
     }
 
-    ret = avcodec_receive_frame(m_codec, m_last_frame);
-    if (ret < 0) {
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            ret = 0;
-            return {nullptr, AvException(AvError::DECODEREXHAUSTED)};
-        }
+    DEBUG("Decoder Filled");
 
+    return AvException(AvError::NOERROR);
+}
+
+/**
+ * @brief Decode a packet
+ *
+ * @return DecoderOutput
+ */
+DecoderOutput Decoder::Decode() {
+    // Recieve frame from decoder
+    int ret = avcodec_receive_frame(m_codec, m_last_frame);
+    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+        DEBUG("Decoder exhausted");
+        return {nullptr, AvException(AvError::DECODEREXHAUSTED)};
+    } else if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::RECIEVEFRAME)};
     }
 
@@ -127,14 +130,18 @@ AvError Decoder::m_Initialize() {
     }
 
     // Copy the codec parameters
-    if (avcodec_parameters_to_context(m_codec, m_codecpar) < 0) {
+    int ret = avcodec_parameters_to_context(m_codec, m_codecpar);
+    if (ret < 0) {
         DEBUG("avcodec_parameters_to_context failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::DECPARAMS;
     }
 
     // Open the decoder context
-    if (avcodec_open2(m_codec, codec, nullptr) < 0) {
+    ret = avcodec_open2(m_codec, codec, nullptr);
+    if (ret < 0) {
         DEBUG("avcodec_open2 failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::DECPARAMS;
     }
 

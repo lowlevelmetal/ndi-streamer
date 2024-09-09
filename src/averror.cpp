@@ -18,6 +18,8 @@ namespace AV::Utils {
  */
 AvException::AvException(AvError errcode) : m_errcode(errcode) {}
 
+AvException::AvException() : m_errcode(AvError::NOERROR) {}
+
 const char *AvException::what() const noexcept {
     switch (m_errcode) {
     case AvError::NOERROR:

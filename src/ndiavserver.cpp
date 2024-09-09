@@ -11,51 +11,86 @@
 namespace AV::Utils {
 
 AvException NdiAvServer::ProcessNextFrame() {
+    static bool still_decoding_video = false;
+    static bool still_decoding_audio = false;
+
+    static AVPacket *frame = nullptr;
+    static AvException frame_err;
+
+    DEBUG("Decoder Status\n"
+          "Video: %s\n"
+          "Audio: %s\n",
+          still_decoding_video ? "Decoding" : "Not Decoding",
+          still_decoding_audio ? "Decoding" : "Not Decoding");
+
     // Grab frame
-    auto [video_frame, video_frame_err] = m_demuxer->ReadFrame();
-    if (video_frame_err.code() != (int)AvError::NOERROR) {
-        return video_frame_err;
-    }
+    if (!still_decoding_video && !still_decoding_audio) {
+        auto [captured_frame, captured_frame_err] = m_demuxer->ReadFrame();
 
-    // Check if video or audio frame
-    if (video_frame->stream_index == m_video_stream_index) {
-        // Decode video frame
-        auto [decoded_video_frame, decoded_video_frame_err] = m_video_decoder->Decode(video_frame);
-        if (decoded_video_frame_err.code() != (int)AvError::NOERROR) {
-            return decoded_video_frame_err;
-        }
+        frame = captured_frame;
+        frame_err = captured_frame_err;
 
-        // Encode video frame
-        auto [encoded_video_frame, encoded_video_frame_err] = m_pixel_encoder->Encode(decoded_video_frame);
-        if (encoded_video_frame_err.code() != (int)AvError::NOERROR) {
-            return encoded_video_frame_err;
-        }
-
-        // Send video frame
-        auto send_video_err = m_ndi_source->SendVideoFrame(encoded_video_frame, m_video_decoder->GetFrameRate(), m_pixel_encoder->GetPixelFormat());
-        if (send_video_err.code() != (int)AvError::NOERROR) {
-            return send_video_err;
-        }
-    } else if (video_frame->stream_index == m_audio_stream_index) {
-        // Decode audio frame
-        auto [decoded_audio_frame, decoded_audio_frame_err] = m_audio_decoder->Decode(video_frame);
-        if (decoded_audio_frame_err.code() != (int)AvError::NOERROR) {
-            return decoded_audio_frame_err;
-        }
-
-        // Resample audio frame
-        auto [resampled_audio_frame, resampled_audio_frame_err] = m_audio_resampler->Resample(decoded_audio_frame);
-        if (resampled_audio_frame_err.code() != (int)AvError::NOERROR) {
-            return resampled_audio_frame_err;
-        }
-
-        // Send audio frame
-        auto send_audio_err = m_ndi_source->SendAudioFrame(resampled_audio_frame);
-        if (send_audio_err.code() != (int)AvError::NOERROR) {
-            return send_audio_err;
+        if (frame_err.code() != (int)AvError::NOERROR) {
+            return frame_err;
         }
     }
 
+    // Process frame
+    if (frame->stream_index == m_video_stream_index) {
+        if (!still_decoding_video) {
+            auto fill_err = m_video_decoder->FillDecoder(frame);
+            if (fill_err.code() != (int)AvError::NOERROR) {
+                return fill_err;
+            }
+            still_decoding_video = true;
+        }
+
+        auto [decoded_frame, decoded_frame_err] = m_video_decoder->Decode();
+        if (decoded_frame_err.code() == (int)AvError::DECODEREXHAUSTED) {
+            still_decoding_video = false;
+            return AvException(AvError::NOERROR);
+        } else if (decoded_frame_err.code() != (int)AvError::NOERROR) {
+            return decoded_frame_err;
+        }
+
+        auto [encoded_frame, encoded_frame_err] = m_pixel_encoder->Encode(decoded_frame);
+        if (encoded_frame_err.code() != (int)AvError::NOERROR) {
+            return encoded_frame_err;
+        }
+
+        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_video_decoder->GetFrameRate(), m_pixel_encoder->GetPixelFormat());
+        if (send_err.code() != (int)AvError::NOERROR) {
+            return send_err;
+        }
+    } else if (frame->stream_index == m_audio_stream_index) {
+        if (!still_decoding_audio) {
+            auto fill_err = m_audio_decoder->FillDecoder(frame);
+            if (fill_err.code() != (int)AvError::NOERROR) {
+                return fill_err;
+            }
+            still_decoding_audio = true;
+        }
+
+        auto [decoded_frame, decoded_frame_err] = m_audio_decoder->Decode();
+        if (decoded_frame_err.code() == (int)AvError::DECODEREXHAUSTED) {
+            still_decoding_audio = false;
+            return AvException(AvError::NOERROR);
+        } else if (decoded_frame_err.code() != (int)AvError::NOERROR) {
+            return decoded_frame_err;
+        }
+
+        auto [resampled_frame, resampled_frame_err] = m_audio_resampler->Resample(decoded_frame);
+        if (resampled_frame_err.code() != (int)AvError::NOERROR) {
+            return resampled_frame_err;
+        }
+
+        auto send_err = m_ndi_source->SendAudioFrame(resampled_frame);
+        if (send_err.code() != (int)AvError::NOERROR) {
+            return send_err;
+        }
+    }
+
+    
     return AvException(AvError::NOERROR);
 }
 

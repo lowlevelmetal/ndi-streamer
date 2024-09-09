@@ -33,6 +33,7 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
     // Allocate the frame
     int ret = av_frame_get_buffer(m_dst_frame, 0);
     if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::FRAMEALLOC)};
     }
 
@@ -140,6 +141,7 @@ AvError AudioResampler::m_Initialize() {
 
     int ret = swr_init(m_swr_context);
     if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
         return AvError::SWRINIT;
     }
 
