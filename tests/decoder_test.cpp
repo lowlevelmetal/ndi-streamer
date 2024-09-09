@@ -19,7 +19,6 @@ TEST(DecoderTest, CreateDecoderSimple) {
     EXPECT_EQ(decoder_err.code(), 0);
 }
 
-
 TEST(DecoderTest, DecodeSinglePacket) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto streams = demuxer->GetStreams();
@@ -27,7 +26,7 @@ TEST(DecoderTest, DecodeSinglePacket) {
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
     auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
-    
+
     // Grab correct packet
     AVPacket *pkt = nullptr;
     do {
@@ -36,10 +35,19 @@ TEST(DecoderTest, DecodeSinglePacket) {
             pkt = packet;
         }
 
-    } while(pkt == nullptr);
+    } while (pkt == nullptr);
 
-    auto [frame, frame_err] = decoder->Decode(pkt);
-    EXPECT_EQ(frame_err.code(), 0);
+    // Fill Decoder
+    auto fill_err = decoder->FillDecoder(pkt);
+    EXPECT_EQ(fill_err.code(), 0);
+
+    while (true) {
+        auto [frame, frame_err] = decoder->Decode();
+        if (frame_err.code() == (int)AV::Utils::AvError::DECODEREXHAUSTED) {
+            break;
+        }
+        EXPECT_EQ(frame_err.code(), 0);
+    }
 }
 
 TEST(DecoderTest, DecodeMultiplePackets) {
@@ -49,7 +57,7 @@ TEST(DecoderTest, DecodeMultiplePackets) {
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
     auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
-    
+
     for (int i = 0; i < 3; i++) {
         // Grab correct packet
         AVPacket *pkt = nullptr;
@@ -59,10 +67,19 @@ TEST(DecoderTest, DecodeMultiplePackets) {
                 pkt = packet;
             }
 
-        } while(pkt == nullptr);
+        } while (pkt == nullptr);
 
-        auto [frame, frame_err] = decoder->Decode(pkt);
-        EXPECT_EQ(frame_err.code(), 0);
+        // Fill Decoder
+        auto fill_err = decoder->FillDecoder(pkt);
+        EXPECT_EQ(fill_err.code(), 0);
+
+        while (true) {
+            auto [frame, frame_err] = decoder->Decode();
+            if (frame_err.code() == (int)AV::Utils::AvError::DECODEREXHAUSTED) {
+                break;
+            }
+            EXPECT_EQ(frame_err.code(), 0);
+        }
     }
 }
 

@@ -80,14 +80,10 @@ int main(int argc, char **argv) {
     std::cin.get();
 #endif
 
+    // Main loop
     while(1) {
         auto err = ndiavserver->ProcessNextFrame();
         if (err.code() != (int)AV::Utils::AvError::NOERROR) {
-            if(err.code() == (int)AV::Utils::AvError::DECODEREXHAUSTED) {
-                DEBUG("Decoder exhausted, pushing next frame");
-                continue;
-            }
-
             ERROR("Error processing next frame: %s", err.what());
             break;
         }

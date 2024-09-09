@@ -40,11 +40,7 @@ ReadFrameResult Demuxer::ReadFrame() {
     // Read the next frame
     int ret = av_read_frame(m_format_ctx, m_packet);
     if (ret < 0) {
-#ifdef _DEBUG
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-        DEBUG("av_read_frame failed: %s", errbuf);
-#endif
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::READFRAME)};
     }
 
@@ -173,6 +169,7 @@ AvError Demuxer::m_Initialize() {
     int ret = avformat_open_input(&m_format_ctx, m_config.path.c_str(), nullptr, &m_opts);
     if (ret < 0) {
         DEBUG("avformat_open_input failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::OPENINPUT;
     }
 
@@ -187,6 +184,7 @@ AvError Demuxer::m_Initialize() {
     ret = avformat_find_stream_info(m_format_ctx, nullptr);
     if (ret < 0) {
         DEBUG("avformat_find_stream_info failed");
+        PRINT_FFMPEG_ERR(ret);
         return AvError::FINDSTREAMINFO;
     }
 

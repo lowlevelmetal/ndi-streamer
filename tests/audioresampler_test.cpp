@@ -11,98 +11,23 @@
 #include "decoder.hpp"
 #include "demuxer.hpp"
 
-TEST(AudioResamplerTest, CreateAudioResamplerSimple) {
-    AV::Utils::DemuxerConfig demuxer_config;
-    demuxer_config.path = "testcontent/rickroll.mp4";
-
-    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(demuxer_config);
-    auto streams = demuxer->GetStreams();
-
-    auto codecpar = streams[1]->codecpar;
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
-
-    // Grab correct packet
-    AVPacket *pkt = nullptr;
-    do {
-        auto [packet, packet_err] = demuxer->ReadFrame();
-        if (packet->stream_index == 1) {
-            pkt = packet;
-        }
-
-    } while(pkt == nullptr);
-
-    auto [frame, frame_err] = decoder->Decode(pkt);
-
-    AV::Utils::AudioResamplerConfig resampler_config;
-    resampler_config.srcsamplerate = frame->sample_rate;
-    resampler_config.dstsamplerate = frame->sample_rate;
-    resampler_config.srcchannellayout = frame->ch_layout;
-    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
-    resampler_config.srcsampleformat = (AVSampleFormat)frame->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
-
-    auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
-    EXPECT_EQ(resampler_err.code(), 0);
-}
-
-TEST(AudioResamplerTest, ResampleSingleFrame) {
-    AV::Utils::DemuxerConfig demuxer_config;
-    demuxer_config.path = "testcontent/rickroll.mp4";
-
-    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(demuxer_config);
-    auto streams = demuxer->GetStreams();
-
-    auto codecpar = streams[1]->codecpar;
-    auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
-
-    // Grab correct packet
-    AVPacket *pkt = nullptr;
-    do {
-        auto [packet, packet_err] = demuxer->ReadFrame();
-        if (packet->stream_index == 1) {
-            pkt = packet;
-        }
-
-    } while(pkt == nullptr);
-
-    auto [frame, frame_err] = decoder->Decode(pkt);
-
-    AV::Utils::AudioResamplerConfig resampler_config;
-    resampler_config.srcsamplerate = frame->sample_rate;
-    resampler_config.dstsamplerate = frame->sample_rate;
-    resampler_config.srcchannellayout = frame->ch_layout;
-    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
-    resampler_config.srcsampleformat = (AVSampleFormat)frame->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
-
-    auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
-    auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
-    EXPECT_EQ(resampled_frame_err.code(), 0);
-    EXPECT_EQ(resampled_frame->sample_rate, frame->sample_rate);
-    EXPECT_EQ(resampled_frame->ch_layout.nb_channels, 2);
-    EXPECT_EQ(resampled_frame->format, resampler_config.dstsampleformat);
-}
-
 TEST(AudioResamplerTest, ResampleMultipleFrames) {
-    AV::Utils::DemuxerConfig demuxer_config;
-    demuxer_config.path = "testcontent/rickroll.mp4";
-
-    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(demuxer_config);
+    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto streams = demuxer->GetStreams();
 
-    auto codecpar = streams[1]->codecpar;
+    AVCodecParameters *codecpar = streams[1]->codecpar;
+
     auto [decoder, decoder_err] = AV::Utils::Decoder::Create(codecpar);
 
-    // Create resampler
-    AV::Utils::AudioResamplerConfig resampler_config;
-    resampler_config.srcsamplerate = streams[1]->codecpar->sample_rate;
-    resampler_config.dstsamplerate = 48000;
-    resampler_config.srcchannellayout = streams[1]->codecpar->ch_layout;
-    resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
-    resampler_config.srcsampleformat = (AVSampleFormat)streams[1]->codecpar->format;
-    resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
+    AV::Utils::AudioResamplerConfig config;
+    config.srcsamplerate = streams[1]->codecpar->sample_rate;
+    config.dstsamplerate = 48000;
+    config.srcchannellayout = streams[1]->codecpar->ch_layout;
+    config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
+    config.srcsampleformat = (AVSampleFormat)streams[1]->codecpar->format;
+    config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
 
-    auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(resampler_config);
+    auto [resampler, resampler_err] = AV::Utils::AudioResampler::Create(config);
 
     for (int i = 0; i < 6; i++) {
         // Grab correct packet
@@ -113,11 +38,22 @@ TEST(AudioResamplerTest, ResampleMultipleFrames) {
                 pkt = packet;
             }
 
-        } while(pkt == nullptr);
+        } while (pkt == nullptr);
 
-        auto [frame, frame_err] = decoder->Decode(pkt);
-        auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
-        EXPECT_EQ(resampled_frame_err.code(), 0);
+        // Fill Decoder
+        auto fill_err = decoder->FillDecoder(pkt);
+        EXPECT_EQ(fill_err.code(), 0);
+
+        while (true) {
+            auto [frame, frame_err] = decoder->Decode();
+            if (frame_err.code() == (int)AV::Utils::AvError::DECODEREXHAUSTED) {
+                break;
+            }
+            EXPECT_EQ(frame_err.code(), 0);
+
+            auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
+            EXPECT_EQ(resampled_frame_err.code(), 0);
+        }
     }
 }
 

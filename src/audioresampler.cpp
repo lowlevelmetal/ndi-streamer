@@ -21,13 +21,6 @@ namespace AV::Utils {
  */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
 
-    /*DEBUG("Source Frame\n"
-          "Sample Rate: %d\n"
-          "Samples: %d\n"
-          "Channels: %d\n"
-          "Sample Format: %s\n",
-          src_frame->sample_rate, src_frame->nb_samples, m_src_nb_channels, av_get_sample_fmt_name((AVSampleFormat)src_frame->format));*/
-
     // Reset frame each time
     av_frame_unref(m_dst_frame);
 
@@ -40,37 +33,23 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
     // Allocate the frame
     int ret = av_frame_get_buffer(m_dst_frame, 0);
     if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::FRAMEALLOC)};
     }
 
     // Configure the context for the frames
     ret = swr_config_frame(m_swr_context, m_dst_frame, src_frame);
     if (ret < 0) {
-#ifdef _DEBUG
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-        DEBUG("swr_config_frame failed: %s", errbuf);
-#endif
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWRCONFIG)};
     }
 
     // Resample the frame
     ret = swr_convert_frame(m_swr_context, m_dst_frame, src_frame);
     if (ret < 0) {
-#ifdef _DEBUG
-        char errbuf[AV_ERROR_MAX_STRING_SIZE];    // AV_ERROR_MAX_STRING_SIZE is defined in FFmpeg
-        av_strerror(ret, errbuf, sizeof(errbuf)); // Use av_strerror to copy the error message to errbuf
-        DEBUG("swr_convert_frame failed: %s", errbuf);
-#endif
+        PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWRCONVERT)};
     }
-
-    /*DEBUG("Resampled Frame\n"
-          "Sample Rate: %d\n"
-          "Samples: %d\n"
-          "Channels: %d\n"
-          "Sample Format: %s\n",
-          m_dst_frame->sample_rate, m_dst_frame->nb_samples, m_dst_nb_channels, av_get_sample_fmt_name((AVSampleFormat)m_dst_frame->format));*/
 
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }
@@ -162,6 +141,7 @@ AvError AudioResampler::m_Initialize() {
 
     int ret = swr_init(m_swr_context);
     if (ret < 0) {
+        PRINT_FFMPEG_ERR(ret);
         return AvError::SWRINIT;
     }
 
