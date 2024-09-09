@@ -70,6 +70,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error getting frame buffer";
     case AvError::SWRCONFIG:
         return DEMUXSTR " Error configuring frame";
+    case AvError::STREAMCOUNT:
+        return DEMUXSTR " Incorrect number of streams";
     default:
         return DEMUXSTR " Unknown error";
     }

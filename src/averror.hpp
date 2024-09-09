@@ -40,6 +40,7 @@ enum class AvError {
     NDIINVALIDPIXFMT,
     FRAMEGETBUFFER,
     SWRCONFIG,
+    STREAMCOUNT,
 };
 
 /**

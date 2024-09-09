@@ -16,6 +16,7 @@
 
 // Local includes
 #include "macro.hpp"
+#include "ndiavserver.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -67,10 +68,25 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    // Create NDI AV Server
+    auto [ndiavserver, ndiavserver_err] = AV::Utils::NdiAvServer::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+    if (ndiavserver_err.code() != (int)AV::Utils::AvError::NOERROR) {
+        ERROR("Error creating NDI AV Server: %s", ndiavserver_err.what());
+        return EXIT_FAILURE;
+    }
+
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
 #endif
+
+    while(1) {
+        auto err = ndiavserver->ProcessNextFrame();
+        if (err.code() != (int)AV::Utils::AvError::NOERROR) {
+            ERROR("Error processing next frame: %s", err.what());
+            break;
+        }
+    }
 
     fflush(stdout);
     fflush(stderr);

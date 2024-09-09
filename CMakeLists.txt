@@ -33,7 +33,8 @@ set(SOURCES
     src/pixelencoder.cpp
     src/audioresampler.cpp
     src/ndi.cpp
-    src/ndisource.cpp)
+    src/ndisource.cpp
+    src/ndiavserver.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
