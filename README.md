@@ -55,7 +55,7 @@ ctest
 
 ## Common Problems
 ### Can't find NDI header files or binaries
-Make sure you have installed the NDI SDK in your /opt/ directory
+Make sure you have installed the NDI SDK in your /opt/ndi directory
 ### Can't see my NDI source on the network
 Make sure you have the avahi service daemon running on your host machine
 
