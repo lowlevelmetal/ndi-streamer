@@ -1,74 +1,111 @@
-/*
- * ndi-streamer
- * ndisource.cpp
- *
- * 09-21-2024
- * Matthew Todd Geiger
+/**
+ * @file ndisource.cpp
+ * @brief This file includes utilities for working with NDI.
+ * @date 2024-09-08
+ * @author Matthew Todd Geiger
  */
 
-// local includes
 #include "ndisource.hpp"
-#include "Processing.NDI.Send.h"
-#include "Processing.NDI.structs.h"
-#include "ndierror.hpp"
 #include "macro.hpp"
-#include "decoder.hpp"
 
-namespace AV {
-    NdiSource::NdiSource(std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {
-        try {
-            m_Initialize();
-        } catch(NdiErrorCode &err) {
-            ERROR("%s", NdiErrorStr(err).c_str());
-        }
+namespace AV::Utils {
+
+AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format) {
+    // Setup the video frame
+    NDIlib_video_frame_v2_t video_frame;
+
+    switch (format) {
+    case AV_PIX_FMT_UYVY422:
+        video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+        break;
+    default:
+        return AvException(AvError::NDIINVALIDPIXFMT);
     }
 
-    NdiSource::~NdiSource() {
-        if(m_initialized)
-            NDIlib_send_destroy(m_pNDI_send);
+    /*DEBUG("Sending Video Frame\n"
+          "Width: %d\n"
+          "Height: %d\n"
+          "Framerate: %d/%d\n",
+          frame->width, frame->height, framerate.first, framerate.second);*/
+
+    video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+    video_frame.xres = frame->width;
+    video_frame.yres = frame->height;
+    video_frame.frame_rate_N = framerate.first;
+    video_frame.frame_rate_D = framerate.second;
+    video_frame.p_data = frame->data[0];
+    video_frame.line_stride_in_bytes = frame->linesize[0];
+
+    NDIlib_send_send_video_v2(m_send_instance, &video_frame);
+
+    return AvException(AvError::NOERROR);
+}
+
+AvException NdiSource::SendAudioFrame(AVFrame *frame) {
+    // Setup the audio frame
+    NDIlib_audio_frame_v2_t audio_frame;
+
+    /*DEBUG("Sending audio frame\n"
+          "Sample rate: %d\n"
+          "Channels: %d\n"
+          "Samples: %d\n",
+          frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples);*/
+
+    audio_frame.sample_rate = frame->sample_rate;
+    audio_frame.no_channels = frame->ch_layout.nb_channels;
+    audio_frame.no_samples = frame->nb_samples;
+    audio_frame.timecode = NDIlib_send_timecode_synthesize;
+    audio_frame.p_data = (float*)frame->data[0];
+
+    NDIlib_send_send_audio_v2(m_send_instance, &audio_frame);
+
+    return AvException(AvError::NOERROR);
+}
+
+NdiSourceResult NdiSource::Create(const std::string &ndi_name) {
+    DEBUG("NdiSource factory called");
+    AvException error(AvError::NOERROR);
+
+    // Create a new NdiSource object, return nullopt if error
+    try {
+        return {std::unique_ptr<NdiSource>(new NdiSource(ndi_name)), AvException(AvError::NOERROR)};
+    } catch (AvException err) {
+        DEBUG("NdiSource error: %s", err.what());
+        error = err;
     }
 
-    NdiErrorCode NdiSource::SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data) {
-        NDIlib_video_frame_v2_t video_frame;
+    return {nullptr, error};
+}
 
-        // Verify supported formats
-        switch(pixel_format) {
-            case AV_PIX_FMT_UYVY422:
-                video_frame.FourCC = NDIlib_FourCC_type_UYVY;
-                break;
-            default:
-                return NdiErrorCode::UnsupportedPixFormat;
-        }
+NdiSource::NdiSource(const std::string &ndi_name) : m_name(ndi_name) {
+    DEBUG("Constructing NdiSource object");
 
-        // Create NDI packet
-        video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
-        video_frame.p_data = video_data;
-        video_frame.line_stride_in_bytes = stride;
-        video_frame.xres = width;
-        video_frame.yres = height;
-        video_frame.frame_rate_N = fr_num;
-        video_frame.frame_rate_D = fr_den;
+    AvError err = m_Initialize();
+    if (err != AvError::NOERROR) {
+        throw err;
+    }
+}
 
-        DEBUG("\n\tWidth --> %d\n"
-                "\tHeight --> %d\n"
-                "\tStride --> %d\n"
-                "\tfr_num --> %d\n"
-                "\tfr_den --> %d\n", width, height, stride, fr_num, fr_den);
+NdiSource::~NdiSource() {
+    DEBUG("Destroying NdiSource object");
 
-        // Send out packet on network
-        NDIlib_send_send_video_v2(m_pNDI_send, &video_frame);
+    if (m_send_instance) {
+        DEBUG("Destroying NDI send instance");
+        NDIlib_send_destroy(m_send_instance);
+    }
+}
 
-        return NdiErrorCode::NoError;
+AvError NdiSource::m_Initialize() {
+    // Create a new send instance
+    DEBUG("Creating NDI send instance");
+    NDIlib_send_create_t send_create_desc;
+    send_create_desc.p_ndi_name = m_name.c_str();
+    m_send_instance = NDIlib_send_create(&send_create_desc);
+    if (!m_send_instance) {
+        return AvError::NDISENDINSTANCE;
     }
 
-    void NdiSource::m_Initialize() {
-        NDIlib_send_create_t NDI_send_create_desc;
-        NDI_send_create_desc.p_ndi_name = m_ndi_source_name.c_str();
+    return AvError::NOERROR;
+}
 
-        if(!(m_pNDI_send = NDIlib_send_create(&NDI_send_create_desc)))
-            throw NdiErrorCode::SendCreate;
-
-        m_initialized = false;
-    }
-
-} // namespace AV
+} // namespace AV::Utils

@@ -8,17 +8,15 @@
 
 // Standard library
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 // POSIX includes
 #include <unistd.h>
 
 // Local includes
-#include "averror.hpp"
 #include "macro.hpp"
-#include "decoder.hpp"
-#include "ndierror.hpp"
-#include "ndisource.hpp"
+#include "ndiavserver.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -29,8 +27,9 @@ typedef struct CommandLineArguments {
 
 void Usage(const char *const argv0) {
     printf("\n%s\n"
-            "\t-i /path/to/media.mp4\n"
-            "\t-s \"NDI Source Name\"\n\n", argv0);
+           "\t-i /path/to/media.mp4\n"
+           "\t-s \"NDI Source Name\"\n\n",
+           argv0);
 }
 
 // Process command line arguments
@@ -39,14 +38,14 @@ ERRORTYPE ParseCommandLineArguments(COMMANDLINEARGUMENTS &cmdlineargs, int argc,
     int opt = 0;
     while ((opt = getopt(argc, argv, "i:s:")) != -1) {
         switch (opt) {
-            case 'i':
-                cmdlineargs.videofile = std::string(optarg);
-                break;
-            case 's':
-                cmdlineargs.ndisource = std::string(optarg);
-                break;
-            default:
-                return FAILED;
+        case 'i':
+            cmdlineargs.videofile = std::string(optarg);
+            break;
+        case 's':
+            cmdlineargs.ndisource = std::string(optarg);
+            break;
+        default:
+            return FAILED;
         }
     }
 
@@ -60,73 +59,42 @@ ERRORTYPE ParseCommandLineArguments(COMMANDLINEARGUMENTS &cmdlineargs, int argc,
     return SUCCESSFUL;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     COMMANDLINEARGUMENTS cmdlineargs;
 
     // Parse command line arguments
-    if(!ParseCommandLineArguments(cmdlineargs, argc, argv)) {
+    if (!ParseCommandLineArguments(cmdlineargs, argc, argv)) {
         Usage(argv[0]);
         return EXIT_FAILURE;
     }
 
-    // Create NDI server
-    AV::NdiSource ndisrc(cmdlineargs.ndisource);
-    
-    // Create libav decoder
-    AV::Decoder decoder(cmdlineargs.videofile);
+    // Create NDI AV Server
+    auto [ndiavserver, ndiavserver_err] = AV::Utils::NdiAvServer::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+    if (ndiavserver_err.code() != (int)AV::Utils::AvError::NOERROR) {
+        ERROR("Error creating NDI AV Server: %s", ndiavserver_err.what());
+        return EXIT_FAILURE;
+    }
 
-    int total_frames = 0;
-    AV::AvErrorCode ret;
-    while((ret = decoder.ReadFrame()) == AV::AvErrorCode::NoError) { // Read a frame
-        if(decoder.IsCurrentFrameVideo()) { // If the frame is a video
-            DEBUG("Processing Video Frame --> %d", total_frames);
+#ifdef _DEBUG
+    std::cout << "Press any key to continue..." << std::endl;
+    std::cin.get();
+#endif
 
-            int decoder_count = 0;
-            while((ret = decoder.DecodeVideoPacket()) == AV::AvErrorCode::NoError) { // Start decoding packets in frames
-                DEBUG("Packet Decoded --> %d", decoder_count);
-
-                // Convert pixel format to UVYV
-                //
-                // YUV420p is very commonly used in mpeg4 files
-                // which is not explicitly supported by NDI
-                uint8_t *converted_buffer = decoder.ConvertToUVYV();
-                if(!converted_buffer) {
-                    FATAL("Failed to create UVYV buffer");
-                }
-
-                int resx, resy;
-                int fr_num, fr_den;
-
-                decoder.GetPacketDimensions(&resx, &resy);
-                decoder.GetPacketFrameRate(&fr_num, &fr_den);
-
-                // Send an NDI video packet out on the network
-                auto ndiret = ndisrc.SendPacket(AV_PIX_FMT_UYVY422,
-                    resx, resy,
-                    fr_num, fr_den,
-                    decoder.GetUVYVPacketStride(),
-                    converted_buffer);
-
-                if(ndiret != AV::NdiErrorCode::NoError)
-                    FATAL("%s", AV::NdiErrorStr(ndiret).c_str());
-
-                // We need to manually free the av_buffer that was
-                // created by ConvertToUVYV
-                av_free(converted_buffer);
-
-                decoder_count++;
+    while(1) {
+        auto err = ndiavserver->ProcessNextFrame();
+        if (err.code() != (int)AV::Utils::AvError::NOERROR) {
+            if(err.code() == (int)AV::Utils::AvError::DECODEREXHAUSTED) {
+                DEBUG("Decoder exhausted, pushing next frame");
+                continue;
             }
 
-            if(ret != AV::AvErrorCode::PacketsClaimed)
-                FATAL("%s", AV::AvErrorStr(ret).c_str());
-
-            total_frames++;
+            ERROR("Error processing next frame: %s", err.what());
+            break;
         }
     }
 
-    if(ret != AV::AvErrorCode::PacketsClaimed)
-        FATAL("%s", AV::AvErrorStr(ret).c_str());
-
+    fflush(stdout);
+    fflush(stderr);
 
     return EXIT_SUCCESS;
 }

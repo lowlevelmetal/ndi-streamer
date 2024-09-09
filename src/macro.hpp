@@ -16,7 +16,7 @@
 #define PRINT(str, ...) printf(str "\n", ##__VA_ARGS__)
 
 #ifdef _DEBUG
-#define DEBUG(str, ...) printf("DEBUG: " str "\n", ##__VA_ARGS__)
+#define DEBUG(str, ...) printf("DEBUG: " str "\n", ##__VA_ARGS__); fflush(stdout)
 #else
 #define DEBUG(str, ...)
 #endif

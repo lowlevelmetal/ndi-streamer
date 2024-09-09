@@ -6,6 +6,7 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat
     libavutil
     libswscale
+    libswresample
     libavdevice
     libavfilter
 )

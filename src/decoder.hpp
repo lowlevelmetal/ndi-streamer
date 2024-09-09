@@ -1,70 +1,54 @@
-/*
- * ndi-streamer
- * decoder.hpp
- *
- * 09-20-2024
- * Matthew Todd Geiger
+/**
+ * @file decoder.hpp
+ * @brief This file includes utilities for decoding media files.
+ * @date 2024-09-06
+ * @author Matthew Todd Geiger
  */
 
 #pragma once
 
-// Standard includes
 #include <string>
+#include <memory>
 
-// Local includes
-#include "macro.hpp"
-#include "averror.hpp"
-
-// FFMPEG Includes
 extern "C" {
-    #include <libavformat/avformat.h>
-    #include <libavutil/imgutils.h>
-    #include <libavutil/time.h>
-    #include <libswscale/swscale.h>
-    #include <libavcodec/codec.h>
-    #include <libavcodec/codec_par.h>
     #include <libavcodec/avcodec.h>
-    #include <libavutil/frame.h>
-    #include <libavcodec/packet.h>
 }
 
-namespace AV {
+#include "averror.hpp"
+#include "demuxer.hpp"
 
-    class Decoder {
-        public:
-            Decoder(std::string &file);
-            Decoder();
-            ~Decoder();
+namespace AV::Utils {
 
-            AvErrorCode OpenFile(std::string &file);
-            AvErrorCode ReadFrame();
-            AvErrorCode DecodeVideoPacket();
-            bool IsCurrentFrameVideo();
-            int GetFrameFormat();
-            void GetPacketDimensions(int *resx, int *resy);
-            void GetPacketFrameRate(int *num, int *den);
-            int GetPacketStride();
-            int GetUVYVPacketStride();
-            uint8_t *GetPacketData();
-            uint8_t *ConvertToUVYV();
+class Decoder;
+using DecoderResult = std::pair<std::unique_ptr<Decoder>, const AvException>;
+using DecoderOutput = std::pair<AVFrame *, const AvException>;
+using CodecFrameRate = std::pair<int, int>;
 
-        private:
-            std::string m_file;
-            bool m_Initialized = false;
-            bool m_fileopened = false;
-            bool m_packet_in_decoder = false;
-            AVFormatContext *m_pformat_context = nullptr;
-            const AVCodec *m_pcodec = nullptr;
-            AVCodecParameters *m_pcodec_parameters = nullptr;
-            AVCodecContext *m_pcodec_context = nullptr;
-            AVFrame *m_pframe = nullptr;
-            AVFrame *m_puyvy_frame = nullptr;
-            AVPacket *m_ppacket = nullptr;
-            int m_video_stream_index = -1;
-            int m_video_total_frames = -1;
+/**
+ * @brief The Decoder class provides utilities for decoding media files.
+ */
+class Decoder {
+private:
+    Decoder(AVCodecParameters *codecpar);
 
-            void m_Initialize();
-            void m_OpenFile(std::string &file);
-    };
+public:
+    ~Decoder();
 
-} // namespace AV
+    // Factory methods
+    static DecoderResult Create(AVCodecParameters *codecpar);
+
+    // Decode frames
+    DecoderOutput Decode(AVPacket *packet);
+
+    // Get framerate from context
+    CodecFrameRate GetFrameRate();
+
+private:
+    AvError m_Initialize();
+
+    AVCodecParameters *m_codecpar = nullptr;
+    AVCodecContext *m_codec = nullptr;
+    AVFrame *m_last_frame = nullptr;
+};
+
+} // namespace AV::Utils

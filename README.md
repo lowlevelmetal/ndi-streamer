@@ -30,7 +30,7 @@ cmake .. && make
 Debug Build
 ```
 mkdir build && cd build
-cmake CMAKE_BUILD_TYPE=Debug .. && make
+cmake -DCMAKE_BUILD_TYPE=Debug .. && make
 ```
 
 This will generate the executable in your build directory
@@ -41,6 +41,16 @@ This will generate the executable in your build directory
 ./ndi-streamer
     -i /path/to/your/media.mp4
     -s "NDI Source Name"
+```
+
+## Running tests
+Build the debug version of the software as shown above then navigate into your build directory
+```
+cd build
+```
+Then run the automated tests
+```
+ctest
 ```
 
 ## Mission

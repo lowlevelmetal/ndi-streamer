@@ -1,36 +1,45 @@
-/*
- * ndi-streamer
- * ndisource.hpp
- *
- * 09-21-2024
- * Matthew Todd Geiger
+/**
+ * @file ndisource.hpp
+ * @brief This file includes utilities for working with NDI.
+ * @date 2024-09-06
+ * @author Matthew Todd Geiger
  */
 
 #pragma once
 
-// Standard includes
-#include <string>
+#include <memory>
 
-// Local includes
 #include "ndi.hpp"
-#include "ndierror.hpp"
+#include "averror.hpp"
+#include "decoder.hpp"
 
-namespace AV {
+extern "C" {
+#include <libavutil/frame.h>
+#include <libavcodec/avcodec.h>
+}
 
-    class NdiSource : public Ndi {
-        public:
-            NdiSource(std::string &ndi_source_name);
-            ~NdiSource();
+namespace AV::Utils {
 
-            NdiErrorCode SendPacket(int pixel_format, int width, int height, int fr_num, int fr_den, int stride, uint8_t *video_data);
+class NdiSource;
+using NdiSourceResult = std::pair<std::unique_ptr<NdiSource>, const AvException>;
 
-        private:
-            NDIlib_send_instance_t m_pNDI_send;
-            std::string m_ndi_source_name;
-            bool m_initialized = false;
+class NdiSource : public Ndi {
+private:
+    NdiSource(const std::string &ndi_name);
 
-            void m_Initialize();
+public:
+    ~NdiSource();
 
-    };
+    static NdiSourceResult Create(const std::string &ndi_name);
 
-} // namespace AV
+    AvException SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format);
+    AvException SendAudioFrame(AVFrame *frame);
+
+private:
+    AvError m_Initialize();
+
+    NDIlib_send_instance_t m_send_instance = nullptr;
+    std::string m_name;
+};
+
+} // namespace AV::Utils

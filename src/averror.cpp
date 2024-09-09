@@ -1,56 +1,84 @@
-/*
- * ndi-streamer
- * averror.cpp
- *
- * 09-20-2024
- * Matthew Todd Geiger
+/**
+ * @file averror.cpp
+ * @brief This file includes utilities for handling errors in the AV namespace.
+ * @date 2024-09-06
+ * @author Matthew Todd Geiger
  */
 
-// Local includes
 #include "averror.hpp"
 
-namespace AV {
-    std::string AvErrorStr(AvErrorCode &err) {
-        switch(err) {
-            case AvErrorCode::NoError:
-                return std::string("No AV error code detected");
-            case AvErrorCode::DecoderNotInitialized:
-                return std::string("AV decoder is not yet initialized");
-            case AvErrorCode::FormatContextAlloc:
-                return std::string("AV failed to allocate memory for format context");
-            case AvErrorCode::FormatHeader:
-                return std::string("Failed to read file format header");
-            case AvErrorCode::FormatStreamInfo:
-                return std::string("Failed to get av file stream information");
-            case AvErrorCode::StreamMissing:
-                return std::string("Failed to find AV stream in file");
-            case AvErrorCode::CodecContext:
-                return std::string("Failed to allocate space for codec context");
-            case AvErrorCode::CodecParameters:
-                return std::string("Failed to fill codec context with codec parameters");
-            case AvErrorCode::CodecOpen:
-                return std::string("Failed to open codec for usage");
-            case AvErrorCode::FrameAlloc:
-                return std::string("Failed to allocate space for frame");
-            case AvErrorCode::PacketAlloc:
-                return std::string("Failed to allocate space for packet");
-            case AvErrorCode::PacketsClaimed:
-                return std::string("Video packets have been exhausted");
-            case AvErrorCode::FileNotOpened:
-                return std::string("File has not been opened for processing");
-            case AvErrorCode::NullPointer:
-                return std::string("Null pointer exception");
-            case AvErrorCode::FrameRead:
-                return std::string("Frame read error");
-            case AvErrorCode::PacketSend:
-                return std::string("Failed to send raw packet to decoder");
-            case AvErrorCode::RecieveFrame:
-                return std::string("Failed to fill frame with decoded output");
-            case AvErrorCode::NotVideoFrame:
-                return std::string("Frame is not a video frame");
-        }
+#define DEMUXSTR "[AVERROR]"
 
-        return std::string("Invalid AV error code");
+namespace AV::Utils {
+
+/**
+ * @brief Construct a new AvException:: AvException object
+ *
+ * @param errcode error code
+ */
+AvException::AvException(AvError errcode) : m_errcode(errcode) {}
+
+const char *AvException::what() const noexcept {
+    switch (m_errcode) {
+    case AvError::NOERROR:
+        return DEMUXSTR " No error";
+    case AvError::OPENINPUT:
+        return DEMUXSTR " Error opening input";
+    case AvError::AVDICTSET:
+        return DEMUXSTR " Error setting dictionary";
+    case AvError::READFRAME:
+        return DEMUXSTR " Error reading frame";
+    case AvError::FRAMEALLOC:
+        return DEMUXSTR " Error allocating frame";
+    case AvError::PACKETALLOC:
+        return DEMUXSTR " Error allocating packet";
+    case AvError::FINDSTREAMINFO:
+        return DEMUXSTR " Error finding stream info";
+    case AvError::FINDDECODER:
+        return DEMUXSTR " Error finding decoder";
+    case AvError::DECODERALLOC:
+        return DEMUXSTR " Error allocating decoder";
+    case AvError::DECPARAMS:
+        return DEMUXSTR " Error with codec parameters";
+    case AvError::SENDPACKET:
+        return DEMUXSTR " Error sending packet to decoder";
+    case AvError::RECIEVEFRAME:
+        return DEMUXSTR " Error receiving frame from decoder";
+    case AvError::DECODEREXHAUSTED:
+        return DEMUXSTR " Decoder is exhausted";
+    case AvError::SWSCONTEXT:
+        return DEMUXSTR " Error creating sws context";
+    case AvError::SWSSCALE:
+        return DEMUXSTR " Error scaling frame";
+    case AvError::AVMALLOC:
+        return DEMUXSTR " Error allocating memory";
+    case AvError::IMAGEFILLARRAYS:
+        return DEMUXSTR " Error filling image arrays";
+    case AvError::SWRALLOCS:
+        return DEMUXSTR " Error allocating swr context";
+    case AvError::SWRINIT:
+        return DEMUXSTR " Error initializing swr context";
+    case AvError::AVSAMPLESALLOC:
+        return DEMUXSTR " Error allocating samples";
+    case AvError::SWRCONVERT:
+        return DEMUXSTR " Error converting samples";
+    case AvError::NDISENDINSTANCE:
+        return DEMUXSTR " Error creating NDI send instance";
+    case AvError::NDIINVALIDPIXFMT:
+        return DEMUXSTR " Invalid NDI pixel format";
+    case AvError::FRAMEGETBUFFER:
+        return DEMUXSTR " Error getting frame buffer";
+    case AvError::SWRCONFIG:
+        return DEMUXSTR " Error configuring frame";
+    case AvError::STREAMCOUNT:
+        return DEMUXSTR " Incorrect number of streams";
+    default:
+        return DEMUXSTR " Unknown error";
     }
-
 }
+
+const int AvException::code() const noexcept {
+    return static_cast<int>(m_errcode);
+}
+
+} // namespace AV::Utils
