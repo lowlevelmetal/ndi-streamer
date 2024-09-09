@@ -42,6 +42,7 @@ DecoderOutput Decoder::Decode(AVPacket *pkt) {
     ret = avcodec_receive_frame(m_codec, m_last_frame);
     if (ret < 0) {
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            ret = 0;
             return {nullptr, AvException(AvError::DECODEREXHAUSTED)};
         }
 

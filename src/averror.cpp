@@ -7,7 +7,7 @@
 
 #include "averror.hpp"
 
-#define DEMUXSTR "[DEMUXER]"
+#define DEMUXSTR "[AVERROR]"
 
 namespace AV::Utils {
 
