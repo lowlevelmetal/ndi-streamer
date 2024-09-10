@@ -42,7 +42,8 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format) {
     video_frame.p_data = frame->data[0];
     video_frame.line_stride_in_bytes = frame->linesize[0];
 
-    NDIlib_send_send_video_async_v2(m_send_instance, &video_frame);
+    //NDIlib_send_send_video_async_v2(m_send_instance, &video_frame);
+    NDIlib_send_send_video_v2(m_send_instance, &video_frame);
 
 #ifdef _DEBUG
     // Profile function
