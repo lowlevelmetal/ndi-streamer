@@ -32,11 +32,11 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
-    video_frame.frame_rate_N = framerate.first;
-    video_frame.frame_rate_D = framerate.second;
+    //video_frame.frame_rate_N = framerate.first;
+    //video_frame.frame_rate_D = framerate.second;
     video_frame.p_data = frame->data[0];
     video_frame.line_stride_in_bytes = frame->linesize[0];
-    video_frame.timecode = NDIlib_send_timecode_synthesize;
+    //video_frame.timecode = NDIlib_send_timecode_synthesize;
 
     NDIlib_send_send_video_v2(m_send_instance, &video_frame);
 
@@ -115,7 +115,7 @@ AvError NdiSource::m_Initialize() {
     NDIlib_send_create_t send_create_desc;
     send_create_desc.p_ndi_name = m_name.c_str();
     send_create_desc.clock_video = true;
-    send_create_desc.clock_audio = true;
+    //send_create_desc.clock_audio = true;
     m_send_instance = NDIlib_send_create(&send_create_desc);
     if (!m_send_instance) {
         return AvError::NDISENDINSTANCE;
