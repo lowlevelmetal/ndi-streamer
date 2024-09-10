@@ -14,6 +14,13 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     // Setup the video frame
     NDIlib_video_frame_v2_t video_frame;
 
+    DEBUG("Sending video frame\n"
+        "Width: %d\n"
+        "Height: %d\n"
+        "Format: %d\n"
+        "Linesize: %d\n",
+        frame->width, frame->height, format, frame->linesize[0]);
+
     switch (format) {
     case AV_PIX_FMT_UYVY422:
         video_frame.FourCC = NDIlib_FourCC_type_UYVY;
@@ -29,6 +36,7 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     video_frame.frame_rate_D = framerate.second;
     video_frame.p_data = frame->data[0];
     video_frame.line_stride_in_bytes = frame->linesize[0];
+    video_frame.timecode = NDIlib_send_timecode_synthesize;
 
     NDIlib_send_send_video_v2(m_send_instance, &video_frame);
 
@@ -36,16 +44,34 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
 }
 
 AvException NdiSource::SendAudioFrame(AVFrame *frame) {
+    DEBUG("Sending audio frame\n"
+        "Sample rate: %d\n"
+        "Channels: %d\n"
+        "Samples: %d\n"
+        "no_samples * sizeof(float): %ld\n"
+        "Linesize: %d\n",
+        frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples, frame->nb_samples * sizeof(float), frame->linesize[0]);
+
     // Setup the audio frame
     NDIlib_audio_frame_v2_t audio_frame;
 
-    audio_frame.sample_rate = frame->sample_rate;
-    audio_frame.no_channels = frame->ch_layout.nb_channels;
-    audio_frame.no_samples = frame->nb_samples;
+    audio_frame.sample_rate = frame->sample_rate;               // Sample rate
+    audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
+    audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
     audio_frame.timecode = NDIlib_send_timecode_synthesize;
-    audio_frame.p_data = (float*)frame->data[0];
+    audio_frame.channel_stride_in_bytes = sizeof(float) * audio_frame.no_samples;   
+
+    // Create planar audio buffer
+    float *audio_buffer = new float[audio_frame.no_channels * audio_frame.no_samples];
+    for (int i = 0; i < audio_frame.no_channels; i++) {
+        memcpy(audio_buffer + i * audio_frame.no_samples, frame->data[i], sizeof(float) * audio_frame.no_samples);
+    }
+
+    audio_frame.p_data = audio_buffer;
 
     NDIlib_send_send_audio_v2(m_send_instance, &audio_frame);
+
+    delete[] audio_buffer;
 
     return AvException(AvError::NOERROR);
 }
@@ -88,6 +114,8 @@ AvError NdiSource::m_Initialize() {
     DEBUG("Creating NDI send instance");
     NDIlib_send_create_t send_create_desc;
     send_create_desc.p_ndi_name = m_name.c_str();
+    send_create_desc.clock_video = true;
+    send_create_desc.clock_audio = true;
     m_send_instance = NDIlib_send_create(&send_create_desc);
     if (!m_send_instance) {
         return AvError::NDISENDINSTANCE;

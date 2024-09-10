@@ -44,6 +44,8 @@ public:
     // Get framerate from context
     CodecFrameRate GetFrameRate();
 
+    AVRational GetTimeBase();
+
 private:
     AvError m_Initialize();
 
