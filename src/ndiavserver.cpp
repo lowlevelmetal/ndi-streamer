@@ -84,7 +84,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return resampled_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendAudioFrame(resampled_frame);
+        auto send_err = m_ndi_source->SendAudioFrameS16(resampled_frame);
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -189,7 +189,7 @@ AvError NdiAvServer::m_Initialize() {
     m_audio_resampler_config.srcchannellayout = audio_codecpar->ch_layout;
     m_audio_resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     m_audio_resampler_config.srcsampleformat = (AVSampleFormat)audio_codecpar->format;
-    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
+    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_S16;
 
     auto [audio_resampler, audio_resampler_err] = AudioResampler::Create(m_audio_resampler_config);
     if (audio_resampler_err.code() != (int)AvError::NOERROR) {

@@ -108,6 +108,36 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
     return AvException(AvError::NOERROR);
 }
 
+AvException NdiSource::SendAudioFrameS16(AVFrame *frame) {
+
+    DEBUG("Sending audio frame\n"
+        "Sample rate: %d\n"
+        "Channels: %d\n"
+        "Samples: %d\n"
+        "no_samples * sizeof(int16_t): %ld\n"
+        "Linesize: %d\n",
+        frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples, frame->nb_samples * sizeof(int16_t), frame->linesize[0]);
+
+    // Setup the audio frame
+    NDIlib_audio_frame_interleaved_16s_t audio_frame;
+    audio_frame.sample_rate = frame->sample_rate;               // Sample rate
+    audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
+    audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
+    audio_frame.timecode = NDIlib_send_timecode_synthesize;
+
+    // Create audio buffer
+    int16_t *audio_buffer = new int16_t[audio_frame.no_channels * audio_frame.no_samples];
+    memcpy(audio_buffer, frame->data[0], sizeof(int16_t) * audio_frame.no_channels * audio_frame.no_samples);
+
+    audio_frame.p_data = audio_buffer;
+    
+    NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &audio_frame);
+
+    delete[] audio_buffer;
+
+    return AvException(AvError::NOERROR);
+}
+
 NdiSourceResult NdiSource::Create(const std::string &ndi_name) {
     DEBUG("NdiSource factory called");
     AvException error(AvError::NOERROR);

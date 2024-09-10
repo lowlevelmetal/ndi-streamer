@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 // POSIX includes
 #include <unistd.h>
@@ -82,11 +83,23 @@ int main(int argc, char **argv) {
 
     // Main loop
     while(1) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
         auto err = ndiavserver->ProcessNextFrame();
         if (err.code() != (int)AV::Utils::AvError::NOERROR) {
             ERROR("Error processing next frame: %s", err.what());
             break;
         }
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Process Next Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+    DEBUG("FPS: %f", 1.0 / std::chrono::duration<double>(time_end - time_start).count());
+#endif
     }
 
     fflush(stdout);

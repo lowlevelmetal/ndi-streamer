@@ -34,6 +34,7 @@ public:
 
     AvException SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format);
     AvException SendAudioFrame(AVFrame *frame);
+    AvException SendAudioFrameS16(AVFrame *frame);
 
 private:
     AvError m_Initialize();
