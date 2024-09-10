@@ -185,11 +185,11 @@ AvError NdiAvServer::m_Initialize() {
 
     // Create the audio resampler
     m_audio_resampler_config.srcsamplerate = audio_codecpar->sample_rate;
-    m_audio_resampler_config.dstsamplerate = 48000;
+    m_audio_resampler_config.dstsamplerate = audio_codecpar->sample_rate;
     m_audio_resampler_config.srcchannellayout = audio_codecpar->ch_layout;
     m_audio_resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     m_audio_resampler_config.srcsampleformat = (AVSampleFormat)audio_codecpar->format;
-    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLT;
+    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
 
     auto [audio_resampler, audio_resampler_err] = AudioResampler::Create(m_audio_resampler_config);
     if (audio_resampler_err.code() != (int)AvError::NOERROR) {

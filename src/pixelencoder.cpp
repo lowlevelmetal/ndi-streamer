@@ -5,6 +5,8 @@
  * @author Matthew Todd Geiger
  */
 
+#include <chrono>
+
 #include "pixelencoder.hpp"
 #include "macro.hpp"
 
@@ -25,6 +27,11 @@ AVPixelFormat PixelEncoder::GetPixelFormat() {
  * @return PixelEncoderOutput The encoded frame
  */
 PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
     // Reset frame each time
     av_frame_unref(m_dst_frame);
 
@@ -46,6 +53,12 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
         PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWSSCALE)};
     }
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Encode time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }
