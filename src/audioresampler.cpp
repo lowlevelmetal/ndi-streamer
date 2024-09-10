@@ -5,6 +5,8 @@
  * @author Matthew Todd Geiger
  */
 
+#include <chrono>
+
 #include "audioresampler.hpp"
 #include "macro.hpp"
 
@@ -20,6 +22,11 @@ namespace AV::Utils {
  * @param src_frame The frame to resample
  */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
 
     // Reset frame each time
     av_frame_unref(m_dst_frame);
@@ -50,6 +57,12 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
         PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWRCONVERT)};
     }
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Resample time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return {m_dst_frame, AvException(AvError::NOERROR)};
 }

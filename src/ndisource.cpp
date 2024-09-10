@@ -5,12 +5,19 @@
  * @author Matthew Todd Geiger
  */
 
+#include <chrono>
+
 #include "ndisource.hpp"
 #include "macro.hpp"
 
 namespace AV::Utils {
 
 AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
     // Setup the video frame
     NDIlib_video_frame_v2_t video_frame;
 
@@ -32,18 +39,27 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
     video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
-    //video_frame.frame_rate_N = framerate.first;
-    //video_frame.frame_rate_D = framerate.second;
+    video_frame.frame_rate_N = framerate.first;
+    video_frame.frame_rate_D = framerate.second;
     video_frame.p_data = frame->data[0];
     video_frame.line_stride_in_bytes = frame->linesize[0];
-    //video_frame.timecode = NDIlib_send_timecode_synthesize;
 
-    NDIlib_send_send_video_v2(m_send_instance, &video_frame);
+    NDIlib_send_send_video_async_v2(m_send_instance, &video_frame);
 
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Video Send time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
     return AvException(AvError::NOERROR);
 }
 
 AvException NdiSource::SendAudioFrame(AVFrame *frame) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
     DEBUG("Sending audio frame\n"
         "Sample rate: %d\n"
         "Channels: %d\n"
@@ -53,13 +69,17 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
         frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples, frame->nb_samples * sizeof(float), frame->linesize[0]);
 
     // Setup the audio frame
-    NDIlib_audio_frame_v2_t audio_frame;
-
+    NDIlib_audio_frame_v3_t audio_frame;
     audio_frame.sample_rate = frame->sample_rate;               // Sample rate
     audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
     audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
     audio_frame.timecode = NDIlib_send_timecode_synthesize;
     audio_frame.channel_stride_in_bytes = sizeof(float) * audio_frame.no_samples;   
+
+#ifdef _DEBUG
+    // Profile copy
+    auto time_copy_start = std::chrono::high_resolution_clock::now();
+#endif
 
     // Create planar audio buffer
     float *audio_buffer = new float[audio_frame.no_channels * audio_frame.no_samples];
@@ -67,11 +87,23 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
         memcpy(audio_buffer + i * audio_frame.no_samples, frame->data[i], sizeof(float) * audio_frame.no_samples);
     }
 
-    audio_frame.p_data = audio_buffer;
+    audio_frame.p_data = (uint8_t *)audio_buffer;
 
-    NDIlib_send_send_audio_v2(m_send_instance, &audio_frame);
+#ifdef _DEBUG
+    // Profile copy
+    auto time_copy_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Audio Copy time (seconds): %f", std::chrono::duration<double>(time_copy_end - time_copy_start).count());
+#endif
+
+    NDIlib_send_send_audio_v3(m_send_instance, &audio_frame);
 
     delete[] audio_buffer;
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Audio Send time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return AvException(AvError::NOERROR);
 }
