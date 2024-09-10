@@ -32,7 +32,7 @@ public:
 
     static NdiSourceResult Create(const std::string &ndi_name);
 
-    AvException SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format);
+    AvException SendVideoFrame(AVFrame *frame, AVPixelFormat format);
     AvException SendAudioFrame(AVFrame *frame);
     AvException SendAudioFrameS16(AVFrame *frame);
 

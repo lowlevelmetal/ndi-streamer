@@ -64,7 +64,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
-            auto send_err = ndisource->SendVideoFrame(encoded_frame, decoder->GetFrameRate(), encoder->GetPixelFormat());
+            auto send_err = ndisource->SendVideoFrame(encoded_frame, encoder->GetPixelFormat());
             EXPECT_EQ(send_err.code(), 0);
         }
     }

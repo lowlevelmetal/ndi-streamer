@@ -10,6 +10,10 @@
 
 namespace AV::Utils {
 
+double NdiAvServer::GetTargetFramerate() {
+    return m_video_decoder->GetFPS();
+}
+
 AvException NdiAvServer::ProcessNextFrame() {
     static bool still_decoding_video = false;
     static bool still_decoding_audio = false;
@@ -58,7 +62,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return encoded_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_video_decoder->GetFrameRate(), m_pixel_encoder->GetPixelFormat());
+        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat());
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }

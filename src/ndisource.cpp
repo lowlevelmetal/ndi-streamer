@@ -12,7 +12,7 @@
 
 namespace AV::Utils {
 
-AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format) {
+AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format) {
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
@@ -36,11 +36,9 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, 
         return AvException(AvError::NDIINVALIDPIXFMT);
     }
 
-    video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+    //video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
-    video_frame.frame_rate_N = framerate.first;
-    video_frame.frame_rate_D = framerate.second;
     video_frame.p_data = frame->data[0];
     video_frame.line_stride_in_bytes = frame->linesize[0];
 
@@ -73,7 +71,7 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
     audio_frame.sample_rate = frame->sample_rate;               // Sample rate
     audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
     audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
-    audio_frame.timecode = NDIlib_send_timecode_synthesize;
+   //audio_frame.timecode = NDIlib_send_timecode_synthesize;
     audio_frame.channel_stride_in_bytes = sizeof(float) * audio_frame.no_samples;   
 
 #ifdef _DEBUG
@@ -109,6 +107,11 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
 }
 
 AvException NdiSource::SendAudioFrameS16(AVFrame *frame) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
 
     DEBUG("Sending audio frame\n"
         "Sample rate: %d\n"
@@ -134,6 +137,12 @@ AvException NdiSource::SendAudioFrameS16(AVFrame *frame) {
     NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &audio_frame);
 
     delete[] audio_buffer;
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Audio Send time S16 (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return AvException(AvError::NOERROR);
 }
@@ -167,6 +176,7 @@ NdiSource::~NdiSource() {
 
     if (m_send_instance) {
         DEBUG("Destroying NDI send instance");
+        NDIlib_send_send_video_async_v2(m_send_instance, nullptr); // Make sure buffers are flushed before shutting down
         NDIlib_send_destroy(m_send_instance);
     }
 }

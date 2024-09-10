@@ -42,9 +42,7 @@ public:
     DecoderOutput Decode();
 
     // Get framerate from context
-    CodecFrameRate GetFrameRate();
-
-    AVRational GetTimeBase();
+    double GetFPS();
 
 private:
     AvError m_Initialize();

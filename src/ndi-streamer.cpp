@@ -76,6 +76,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
+
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
@@ -97,8 +99,14 @@ int main(int argc, char **argv) {
 #ifdef _DEBUG
     // Profile function
     auto time_end = std::chrono::high_resolution_clock::now();
+    auto fps = 1.0 / std::chrono::duration<double>(time_end - time_start).count();
     DEBUG("Process Next Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
-    DEBUG("FPS: %f", 1.0 / std::chrono::duration<double>(time_end - time_start).count());
+    DEBUG("FPS: %f", fps);
+    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
+    auto target_fps = ndiavserver->GetTargetFramerate()-1.0;
+    if (fps < target_fps) {
+        FATAL("FPS DIP BELOW %lf!", target_fps);
+    }
 #endif
     }
 
