@@ -40,6 +40,7 @@ public:
 
     // Process and send next frame
     AvException ProcessNextFrame();
+    double GetTargetFramerate();
     
 
 private:
@@ -59,6 +60,9 @@ private:
 
     std::string m_ndi_name;
     std::string m_media_path;
+
+    AVRational m_video_time_base;
+    AVRational m_audio_time_base;
     
 };
 

@@ -64,7 +64,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
-            auto send_err = ndisource->SendVideoFrame(encoded_frame, decoder->GetFrameRate(), encoder->GetPixelFormat());
+            auto send_err = ndisource->SendVideoFrame(encoded_frame, encoder->GetPixelFormat(), streams[0]->time_base, decoder->GetFrameRate());
             EXPECT_EQ(send_err.code(), 0);
         }
     }
@@ -115,7 +115,7 @@ TEST(NdiSourceTest, SendNdiAudioFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
-            auto send_err = ndisource->SendAudioFrame(resampled_frame);
+            auto send_err = ndisource->SendAudioFrameFLTPlanar(resampled_frame, streams[1]->time_base);
             EXPECT_EQ(send_err.code(), 0);
         }
     }

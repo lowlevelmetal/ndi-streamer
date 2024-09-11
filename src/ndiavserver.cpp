@@ -10,6 +10,10 @@
 
 namespace AV::Utils {
 
+double NdiAvServer::GetTargetFramerate() {
+    return m_video_decoder->GetFPS();
+}
+
 AvException NdiAvServer::ProcessNextFrame() {
     static bool still_decoding_video = false;
     static bool still_decoding_audio = false;
@@ -58,7 +62,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return encoded_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_video_decoder->GetFrameRate(), m_pixel_encoder->GetPixelFormat());
+        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -84,7 +88,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return resampled_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendAudioFrame(resampled_frame);
+        auto send_err = m_ndi_source->SendAudioFrameS16(resampled_frame, m_audio_time_base);
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -141,10 +145,12 @@ AvError NdiAvServer::m_Initialize() {
             DEBUG("Found video stream");
             m_video_stream_index = stream->index;
             video_codecpar = stream->codecpar;
+            m_video_time_base = stream->time_base;
             video_count++;
         } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             DEBUG("Found audio stream");
             m_audio_stream_index = stream->index;
+            m_audio_time_base = stream->time_base;
             audio_codecpar = stream->codecpar;
             audio_count++;
         }
@@ -189,7 +195,7 @@ AvError NdiAvServer::m_Initialize() {
     m_audio_resampler_config.srcchannellayout = audio_codecpar->ch_layout;
     m_audio_resampler_config.dstchannellayout = AV_CHANNEL_LAYOUT_STEREO;
     m_audio_resampler_config.srcsampleformat = (AVSampleFormat)audio_codecpar->format;
-    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_FLTP;
+    m_audio_resampler_config.dstsampleformat = AV_SAMPLE_FMT_S16;
 
     auto [audio_resampler, audio_resampler_err] = AudioResampler::Create(m_audio_resampler_config);
     if (audio_resampler_err.code() != (int)AvError::NOERROR) {

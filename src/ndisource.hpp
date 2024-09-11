@@ -16,6 +16,7 @@
 extern "C" {
 #include <libavutil/frame.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 }
 
 namespace AV::Utils {
@@ -32,8 +33,9 @@ public:
 
     static NdiSourceResult Create(const std::string &ndi_name);
 
-    AvException SendVideoFrame(AVFrame *frame, CodecFrameRate framerate, AVPixelFormat format);
-    AvException SendAudioFrame(AVFrame *frame);
+    AvException SendVideoFrame(AVFrame *frame, AVPixelFormat format, const AVRational &time_base, const CodecFrameRate &fps);
+    AvException SendAudioFrameFLTPlanar(AVFrame *frame, const AVRational &time_base);
+    AvException SendAudioFrameS16(AVFrame *frame, const AVRational &time_base);
 
 private:
     AvError m_Initialize();

@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <chrono>
 
 // POSIX includes
 #include <unistd.h>
@@ -75,6 +76,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
+
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
@@ -82,11 +85,29 @@ int main(int argc, char **argv) {
 
     // Main loop
     while(1) {
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
         auto err = ndiavserver->ProcessNextFrame();
         if (err.code() != (int)AV::Utils::AvError::NOERROR) {
             ERROR("Error processing next frame: %s", err.what());
             break;
         }
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    auto fps = 1.0 / std::chrono::duration<double>(time_end - time_start).count();
+    DEBUG("Process Next Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+    DEBUG("FPS: %f", fps);
+    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
+    auto target_fps = ndiavserver->GetTargetFramerate()-1.0;
+    if (fps < target_fps) {
+        FATAL("FPS DIP BELOW %lf!", target_fps);
+    }
+#endif
     }
 
     fflush(stdout);
