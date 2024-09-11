@@ -27,8 +27,9 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format, cons
         "Format: %d\n"
         "Linesize: %d\n"
         "Timebase: %d/%d\n"
-        "PTS: %ld\n",
-        frame->width, frame->height, format, frame->linesize[0], time_base.num, time_base.den, frame->pts);
+        "PTS: %ld\n"
+        "FPS: %d/%d\n",
+        frame->width, frame->height, format, frame->linesize[0], time_base.num, time_base.den, frame->pts, fps.first, fps.second);
 
     switch (format) {
     case AV_PIX_FMT_UYVY422:
@@ -38,15 +39,18 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format, cons
         return AvException(AvError::NDIINVALIDPIXFMT);
     }
 
-    if (frame->pts == AV_NOPTS_VALUE) {
-        DEBUG("Using frame rate for video timecode");
-        video_frame.frame_rate_N = fps.first;
-        video_frame.frame_rate_D = fps.second;
-    } else {
-        DEBUG("Using PTS for video timecode");
+    if (frame->pts != AV_NOPTS_VALUE) {
+        DEBUG("Using PTS for video timing");
         double pts_in_seconds = frame->pts * av_q2d(time_base);
         int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
         video_frame.timecode = ndi_timecode;
+    } else if (fps.first != 0 && fps.second != 0) {
+        DEBUG("Using FPS for video timing");
+        video_frame.frame_rate_N = fps.first;
+        video_frame.frame_rate_D = fps.second;
+    } else {
+        DEBUG("No PTS or FPS for video timecode");
+        video_frame.timecode = NDIlib_send_timecode_synthesize;
     }
 
     video_frame.xres = frame->width;
