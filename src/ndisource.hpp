@@ -34,7 +34,7 @@ public:
     static NdiSourceResult Create(const std::string &ndi_name);
 
     AvException SendVideoFrame(AVFrame *frame, AVPixelFormat format, const AVRational &time_base, const CodecFrameRate &fps);
-    AvException SendAudioFrameFLTPlanar(AVFrame *frame);
+    AvException SendAudioFrameFLTPlanar(AVFrame *frame, const AVRational &time_base);
     AvException SendAudioFrameS16(AVFrame *frame, const AVRational &time_base);
 
 private:

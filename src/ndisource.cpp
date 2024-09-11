@@ -12,6 +12,14 @@
 
 namespace AV::Utils {
 
+/**
+ * @brief Send a video frame to the NDI source.
+ * 
+ * @param frame The video frame to send.
+ * @param format The pixel format of the video frame.
+ * @param time_base The time base of the video frame. https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method
+ * @param fps The frame rate of the video frame.
+ */
 AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format, const AVRational &time_base, const CodecFrameRate &fps) {
 #ifdef _DEBUG
     // Profile function
@@ -69,7 +77,7 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format, cons
     return AvException(AvError::NOERROR);
 }
 
-AvException NdiSource::SendAudioFrameFLTPlanar(AVFrame *frame) {
+AvException NdiSource::SendAudioFrameFLTPlanar(AVFrame *frame, const AVRational &time_base) {
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
@@ -85,15 +93,22 @@ AvException NdiSource::SendAudioFrameFLTPlanar(AVFrame *frame) {
 
     // Setup the audio frame
     NDIlib_audio_frame_v3_t audio_frame;
+
+    // Use PTS for audio timecode
+    if (frame->pts != AV_NOPTS_VALUE) {
+        DEBUG("Using PTS for audio timecode");
+        double pts_in_seconds = frame->pts * av_q2d(time_base);
+        int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
+        audio_frame.timecode = ndi_timecode;
+    } else {
+        DEBUG("No PTS for audio timecode");
+        audio_frame.timecode = NDIlib_send_timecode_synthesize;
+    }
+
     audio_frame.sample_rate = frame->sample_rate;               // Sample rate
     audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
     audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
     audio_frame.channel_stride_in_bytes = sizeof(float) * audio_frame.no_samples;   
-
-#ifdef _DEBUG
-    // Profile copy
-    auto time_copy_start = std::chrono::high_resolution_clock::now();
-#endif
 
     // Create planar audio buffer
     float *audio_buffer = new float[audio_frame.no_channels * audio_frame.no_samples];
@@ -102,12 +117,6 @@ AvException NdiSource::SendAudioFrameFLTPlanar(AVFrame *frame) {
     }
 
     audio_frame.p_data = (uint8_t *)audio_buffer;
-
-#ifdef _DEBUG
-    // Profile copy
-    auto time_copy_end = std::chrono::high_resolution_clock::now();
-    DEBUG("Audio Copy time (seconds): %f", std::chrono::duration<double>(time_copy_end - time_copy_start).count());
-#endif
 
     NDIlib_send_send_audio_v3(m_send_instance, &audio_frame);
 

@@ -115,7 +115,7 @@ TEST(NdiSourceTest, SendNdiAudioFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [resampled_frame, resampled_frame_err] = resampler->Resample(frame);
-            auto send_err = ndisource->SendAudioFrameFLTPlanar(resampled_frame);
+            auto send_err = ndisource->SendAudioFrameFLTPlanar(resampled_frame, streams[1]->time_base);
             EXPECT_EQ(send_err.code(), 0);
         }
     }
