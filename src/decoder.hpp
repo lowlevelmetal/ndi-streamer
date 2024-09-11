@@ -41,8 +41,10 @@ public:
     AvException FillDecoder(AVPacket *packet);
     DecoderOutput Decode();
 
-    // Get framerate from context
+    // Get FPS From context
     double GetFPS();
+    CodecFrameRate GetFrameRate();
+
 
 private:
     AvError m_Initialize();

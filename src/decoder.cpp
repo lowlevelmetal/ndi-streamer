@@ -10,6 +10,10 @@
 
 namespace AV::Utils {
 
+CodecFrameRate Decoder::GetFrameRate() {
+    return {m_codec->framerate.num, m_codec->framerate.den};
+}
+
 double Decoder::GetFPS() {
     return av_q2d(m_codec->framerate);
 }

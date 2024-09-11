@@ -12,21 +12,23 @@
 
 namespace AV::Utils {
 
-AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format) {
+AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format, const AVRational &time_base, const CodecFrameRate &fps) {
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
 #endif
 
     // Setup the video frame
-    NDIlib_video_frame_v2_t video_frame;
+    NDIlib_video_frame_v2_t video_frame{};
 
     DEBUG("Sending video frame\n"
         "Width: %d\n"
         "Height: %d\n"
         "Format: %d\n"
-        "Linesize: %d\n",
-        frame->width, frame->height, format, frame->linesize[0]);
+        "Linesize: %d\n"
+        "Timebase: %d/%d\n"
+        "PTS: %ld\n",
+        frame->width, frame->height, format, frame->linesize[0], time_base.num, time_base.den, frame->pts);
 
     switch (format) {
     case AV_PIX_FMT_UYVY422:
@@ -36,7 +38,17 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format) {
         return AvException(AvError::NDIINVALIDPIXFMT);
     }
 
-    //video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
+    if (frame->pts == AV_NOPTS_VALUE) {
+        DEBUG("Using frame rate for video timecode");
+        video_frame.frame_rate_N = fps.first;
+        video_frame.frame_rate_D = fps.second;
+    } else {
+        DEBUG("Using PTS for video timecode");
+        double pts_in_seconds = frame->pts * av_q2d(time_base);
+        int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
+        video_frame.timecode = ndi_timecode;
+    }
+
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
     video_frame.p_data = frame->data[0];
@@ -53,7 +65,7 @@ AvException NdiSource::SendVideoFrame(AVFrame *frame, AVPixelFormat format) {
     return AvException(AvError::NOERROR);
 }
 
-AvException NdiSource::SendAudioFrame(AVFrame *frame) {
+AvException NdiSource::SendAudioFrameFLTPlanar(AVFrame *frame) {
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
@@ -72,7 +84,6 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
     audio_frame.sample_rate = frame->sample_rate;               // Sample rate
     audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
     audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
-   //audio_frame.timecode = NDIlib_send_timecode_synthesize;
     audio_frame.channel_stride_in_bytes = sizeof(float) * audio_frame.no_samples;   
 
 #ifdef _DEBUG
@@ -107,7 +118,7 @@ AvException NdiSource::SendAudioFrame(AVFrame *frame) {
     return AvException(AvError::NOERROR);
 }
 
-AvException NdiSource::SendAudioFrameS16(AVFrame *frame) {
+AvException NdiSource::SendAudioFrameS16(AVFrame *frame, const AVRational &time_base) {
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
@@ -119,15 +130,28 @@ AvException NdiSource::SendAudioFrameS16(AVFrame *frame) {
         "Channels: %d\n"
         "Samples: %d\n"
         "no_samples * sizeof(int16_t): %ld\n"
-        "Linesize: %d\n",
-        frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples, frame->nb_samples * sizeof(int16_t), frame->linesize[0]);
+        "Linesize: %d\n"
+        "Timebase: %d/%d\n"
+        "PTS: %ld\n",
+        frame->sample_rate, frame->ch_layout.nb_channels, frame->nb_samples, frame->nb_samples * sizeof(int16_t), frame->linesize[0], time_base.num, time_base.den, frame->pts);
 
     // Setup the audio frame
-    NDIlib_audio_frame_interleaved_16s_t audio_frame;
+    NDIlib_audio_frame_interleaved_16s_t audio_frame{};
+
+    if (frame->pts != AV_NOPTS_VALUE) {
+        DEBUG("Using PTS for audio timecode");
+        double pts_in_seconds = frame->pts * av_q2d(time_base);
+        int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
+        audio_frame.timecode = ndi_timecode;
+    } else {
+        DEBUG("No PTS for audio timecode");
+        audio_frame.timecode = NDIlib_send_timecode_synthesize;
+    }
+
     audio_frame.sample_rate = frame->sample_rate;               // Sample rate
     audio_frame.no_channels = frame->ch_layout.nb_channels;     // Number of channels
     audio_frame.no_samples = frame->nb_samples;                 // Number of samples per channel
-    audio_frame.timecode = NDIlib_send_timecode_synthesize;
+
 
     // Create audio buffer
     int16_t *audio_buffer = new int16_t[audio_frame.no_channels * audio_frame.no_samples];

@@ -62,7 +62,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return encoded_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat());
+        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -88,7 +88,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return resampled_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendAudioFrameS16(resampled_frame);
+        auto send_err = m_ndi_source->SendAudioFrameS16(resampled_frame, m_audio_time_base);
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -145,10 +145,12 @@ AvError NdiAvServer::m_Initialize() {
             DEBUG("Found video stream");
             m_video_stream_index = stream->index;
             video_codecpar = stream->codecpar;
+            m_video_time_base = stream->time_base;
             video_count++;
         } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             DEBUG("Found audio stream");
             m_audio_stream_index = stream->index;
+            m_audio_time_base = stream->time_base;
             audio_codecpar = stream->codecpar;
             audio_count++;
         }
