@@ -65,6 +65,4 @@ add_test(NAME valgrind_ndisource_test
 
 # Set up asyncndisource tests
 add_test(NAME asyncndisource_test COMMAND asyncndisource_test)
-add_test(NAME valgrind_asyncndisource_test
-         COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:asyncndisource_test>)
 

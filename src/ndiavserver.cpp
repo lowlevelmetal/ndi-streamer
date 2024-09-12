@@ -62,7 +62,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return encoded_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
+        auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -88,7 +88,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             return resampled_frame_err;
         }
 
-        auto send_err = m_ndi_source->SendAudioFrameS16(resampled_frame, m_audio_time_base);
+        auto send_err = m_ndi_source->LoadAudioFrameS16(resampled_frame, m_audio_time_base);
         if (send_err.code() != (int)AvError::NOERROR) {
             return send_err;
         }
@@ -205,7 +205,7 @@ AvError NdiAvServer::m_Initialize() {
     m_audio_resampler = std::move(audio_resampler);
 
     // Create the NDI source
-    auto [ndi_source, ndi_source_err] = NdiSource::Create(m_ndi_name);
+    auto [ndi_source, ndi_source_err] = AsyncNdiSource::Create(m_ndi_name);
     if (ndi_source_err.code() != (int)AvError::NOERROR) {
         return (AvError)ndi_source_err.code();
     }

@@ -8,7 +8,7 @@
 #pragma once
 
 // local includes
-#include "ndisource.hpp"
+#include "asyncndisource.hpp"
 #include "demuxer.hpp"
 #include "decoder.hpp"
 #include "pixelencoder.hpp"
@@ -53,7 +53,7 @@ private:
     std::unique_ptr<PixelEncoder> m_pixel_encoder;
     AudioResamplerConfig m_audio_resampler_config;
     std::unique_ptr<AudioResampler> m_audio_resampler;
-    std::unique_ptr<NdiSource> m_ndi_source;
+    std::unique_ptr<AsyncNdiSource> m_ndi_source;
 
     int m_video_stream_index = 0;
     int m_audio_stream_index = 0;

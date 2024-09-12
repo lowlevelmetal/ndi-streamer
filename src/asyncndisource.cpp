@@ -108,7 +108,7 @@ AvException AsyncNdiSource::LoadVideoFrame(AVFrame *frame, AVPixelFormat format,
 }
 
 AvException AsyncNdiSource::LoadAudioFrameS16(AVFrame *frame, const AVRational &time_base) {
-    DEBUG("Sending audio frame\n"
+    DEBUG("Loading audio frame\n"
         "Sample rate: %d\n"
         "Channels: %d\n"
         "Samples: %d\n"
@@ -182,8 +182,8 @@ void AsyncNdiSource::m_VideoThread() {
 		// Send!
 		if(m_thread_using_video_frame) {
 			NDIlib_send_send_video_v2(m_send_instance, &m_video_frame);
-
 			m_thread_using_video_frame = false;
+            DEBUG("Video frame sent");
 		}
     }
 
@@ -197,8 +197,8 @@ void AsyncNdiSource::m_AudioS16Thread() {
 		// Send!
 		if(m_thread_using_audio_s16_frame) {
 			NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &m_audio_s16_frame);
-
 			m_thread_using_audio_s16_frame = false;
+            DEBUG("Audio S16 frame sent");
 		}
     }
 
