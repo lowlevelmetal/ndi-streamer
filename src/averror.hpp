@@ -8,6 +8,7 @@
 #pragma once
 
 #include <exception>
+#include <atomic>
 
 namespace AV::Utils {
 
@@ -57,5 +58,7 @@ public:
 private:
     AvError m_errcode;
 };
+
+using AtomicAvException = std::atomic<AvError>;
 
 } // namespace AV::Utils
