@@ -35,10 +35,16 @@ AsyncNdiSource::~AsyncNdiSource() {
     DEBUG("Destroying AsyncNdiSource");
 
     // Shutdown threads
-    m_shutdown_audio_s16_thread = true;
-    m_shutdown_video_thread = true;
-    m_video_thread.join();
+    {
+        std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
+        std::unique_lock<std::mutex> lock2(m_video_frame_mtx);
+        m_shutdown_audio_s16_thread = true;
+        m_shutdown_video_thread = true;
+        m_audio_s16_frame_cv.notify_one();
+        m_video_frame_cv.notify_one();
+    }
     m_audio_s16_thread.join();
+    m_video_thread.join();
 
     DEBUG("Threads shutdown");
 
@@ -183,10 +189,15 @@ AvError AsyncNdiSource::m_Initialize() {
 void AsyncNdiSource::m_VideoThread() {
     DEBUG("Video thread started");
 
-    while (!m_shutdown_video_thread) {
+    std::unique_lock<std::mutex> lock(m_video_frame_mtx);
+    while (1) {
         // Send!
-        std::unique_lock<std::mutex> lock(m_video_frame_mtx);
-        m_video_frame_cv.wait(lock, [this] { return m_thread_using_video_frame; });
+        m_video_frame_cv.wait(lock, [this] { return m_thread_using_video_frame || m_shutdown_video_thread; });
+
+        if (m_shutdown_video_thread) {
+            break;
+        }
+
         NDIlib_send_send_video_v2(m_send_instance, &m_video_frame);
         m_thread_using_video_frame = false;
         m_video_frame_cv.notify_one();
@@ -199,10 +210,15 @@ void AsyncNdiSource::m_VideoThread() {
 void AsyncNdiSource::m_AudioS16Thread() {
     DEBUG("Audio S16 thread started");
 
-    while (!m_shutdown_audio_s16_thread) {
+    std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
+    while (1) {
         // Send!
-        std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
-        m_audio_s16_frame_cv.wait(lock, [this] { return m_thread_using_audio_s16_frame; });
+        m_audio_s16_frame_cv.wait(lock, [this] { return m_thread_using_audio_s16_frame || m_shutdown_audio_s16_thread; });
+
+        if (m_shutdown_audio_s16_thread) {
+            break;
+        }
+
         NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &m_audio_s16_frame);
         m_thread_using_audio_s16_frame = false;
         m_audio_s16_frame_cv.notify_one();
