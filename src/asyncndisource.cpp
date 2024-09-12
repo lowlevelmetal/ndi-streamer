@@ -102,7 +102,9 @@ AvException AsyncNdiSource::LoadVideoFrame(AVFrame *frame, AVPixelFormat format,
     video_frame.line_stride_in_bytes = frame->linesize[0];
 
     std::unique_lock<std::mutex> lock(m_video_frame_mtx);
-    m_video_frame_cv.wait(lock, [this] { return !m_thread_using_video_frame; });
+    if(m_thread_using_video_frame) {
+        m_video_frame_cv.wait(lock, [this] { return !m_thread_using_video_frame; });
+    }
 
     // Load the frame into atomic space
     m_video_frame = video_frame;
@@ -148,7 +150,11 @@ AvException AsyncNdiSource::LoadAudioFrameS16(AVFrame *frame, const AVRational &
     memcpy(audio_buffer, frame->data[0], sizeof(int16_t) * audio_frame.no_channels * audio_frame.no_samples);
 
     std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
-    m_audio_s16_frame_cv.wait(lock, [this] { return !m_thread_using_audio_s16_frame; });
+
+    // Only wait if we need to
+    if(m_thread_using_audio_s16_frame) {
+        m_audio_s16_frame_cv.wait(lock, [this] { return !m_thread_using_audio_s16_frame; });
+    }
 
     // Delete the old buffer
     if (m_audio_s16_frame.p_data != nullptr) {
@@ -189,10 +195,13 @@ AvError AsyncNdiSource::m_Initialize() {
 void AsyncNdiSource::m_VideoThread() {
     DEBUG("Video thread started");
 
-    std::unique_lock<std::mutex> lock(m_video_frame_mtx);
     while (1) {
-        // Send!
-        m_video_frame_cv.wait(lock, [this] { return m_thread_using_video_frame || m_shutdown_video_thread; });
+        std::unique_lock<std::mutex> lock(m_video_frame_mtx);
+
+        // Only wait if we need to
+        if(!m_thread_using_video_frame && !m_shutdown_video_thread) {
+            m_video_frame_cv.wait(lock, [this] { return m_thread_using_video_frame || m_shutdown_video_thread; });
+        }
 
         if (m_shutdown_video_thread) {
             break;
@@ -210,10 +219,12 @@ void AsyncNdiSource::m_VideoThread() {
 void AsyncNdiSource::m_AudioS16Thread() {
     DEBUG("Audio S16 thread started");
 
-    std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
     while (1) {
-        // Send!
-        m_audio_s16_frame_cv.wait(lock, [this] { return m_thread_using_audio_s16_frame || m_shutdown_audio_s16_thread; });
+        std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
+
+        if(!m_thread_using_audio_s16_frame && !m_shutdown_audio_s16_thread) {
+            m_audio_s16_frame_cv.wait(lock, [this] { return m_thread_using_audio_s16_frame || m_shutdown_audio_s16_thread; });
+        }
 
         if (m_shutdown_audio_s16_thread) {
             break;
