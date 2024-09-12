@@ -9,4 +9,8 @@
 
 namespace AV::Utils {
 
+class MtAvServer {
+
+};
+
 } // namespace AV::Utils
