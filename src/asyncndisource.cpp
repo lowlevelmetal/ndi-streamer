@@ -36,12 +36,12 @@ AsyncNdiSource::~AsyncNdiSource() {
 
     // Shutdown threads
     {
-        std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
-        std::unique_lock<std::mutex> lock2(m_video_frame_mtx);
         m_shutdown_audio_s16_thread = true;
         m_shutdown_video_thread = true;
-        m_audio_s16_frame_cv.notify_one();
-        m_video_frame_cv.notify_one();
+        std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
+        std::unique_lock<std::mutex> lock2(m_video_frame_mtx);
+        m_audio_s16_frame_ready.notify_one();
+        m_video_frame_ready.notify_one();
     }
     m_audio_s16_thread.join();
     m_video_thread.join();
@@ -102,17 +102,11 @@ AvException AsyncNdiSource::LoadVideoFrame(AVFrame *frame, AVPixelFormat format,
     video_frame.line_stride_in_bytes = frame->linesize[0];
 
     std::unique_lock<std::mutex> lock(m_video_frame_mtx);
-    if(m_thread_using_video_frame) {
-        m_video_frame_cv.wait(lock, [this] { return !m_thread_using_video_frame; });
-    }
 
     // Load the frame into atomic space
     m_video_frame = video_frame;
 
-    // Lets set this ourselves, the thread will change this to false when it is done
-    m_thread_using_video_frame = true;
-
-    m_video_frame_cv.notify_one();
+    m_video_frame_ready.notify_one();
 
     return AvError::NOERROR;
 }
@@ -151,11 +145,6 @@ AvException AsyncNdiSource::LoadAudioFrameS16(AVFrame *frame, const AVRational &
 
     std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
 
-    // Only wait if we need to
-    if(m_thread_using_audio_s16_frame) {
-        m_audio_s16_frame_cv.wait(lock, [this] { return !m_thread_using_audio_s16_frame; });
-    }
-
     // Delete the old buffer
     if (m_audio_s16_frame.p_data != nullptr) {
         delete[] m_audio_s16_frame.p_data;
@@ -166,10 +155,7 @@ AvException AsyncNdiSource::LoadAudioFrameS16(AVFrame *frame, const AVRational &
     // Load the frame into atomic space
     m_audio_s16_frame = audio_frame;
 
-    // Lets set this ourselves, the thread will change this to false when it is done
-    m_thread_using_audio_s16_frame = true;
-
-    m_audio_s16_frame_cv.notify_one();
+    m_audio_s16_frame_ready.notify_one();
 
     return AvError::NOERROR;
 }
@@ -197,19 +183,19 @@ void AsyncNdiSource::m_VideoThread() {
 
     while (1) {
         std::unique_lock<std::mutex> lock(m_video_frame_mtx);
-
-        // Only wait if we need to
-        if(!m_thread_using_video_frame && !m_shutdown_video_thread) {
-            m_video_frame_cv.wait(lock, [this] { return m_thread_using_video_frame || m_shutdown_video_thread; });
+        auto ret = m_video_frame_ready.wait_for(lock, std::chrono::seconds(5));
+        if (ret == std::cv_status::timeout) {
+            DEBUG("Timeout was waiting for too long, shutting down video thread");
+            break;
         }
 
         if (m_shutdown_video_thread) {
             break;
         }
 
-        NDIlib_send_send_video_v2(m_send_instance, &m_video_frame);
-        m_thread_using_video_frame = false;
-        m_video_frame_cv.notify_one();
+        if(m_video_frame.p_data)
+            NDIlib_send_send_video_v2(m_send_instance, &m_video_frame);
+
         DEBUG("Video frame sent");
     }
 
@@ -221,18 +207,19 @@ void AsyncNdiSource::m_AudioS16Thread() {
 
     while (1) {
         std::unique_lock<std::mutex> lock(m_audio_s16_frame_mtx);
-
-        if(!m_thread_using_audio_s16_frame && !m_shutdown_audio_s16_thread) {
-            m_audio_s16_frame_cv.wait(lock, [this] { return m_thread_using_audio_s16_frame || m_shutdown_audio_s16_thread; });
+        auto ret = m_audio_s16_frame_ready.wait_for(lock, std::chrono::seconds(5));
+        if (ret == std::cv_status::timeout) {
+            DEBUG("Timeout was waiting for too long, shutting down audio thread");
+            break;
         }
 
         if (m_shutdown_audio_s16_thread) {
             break;
         }
 
-        NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &m_audio_s16_frame);
-        m_thread_using_audio_s16_frame = false;
-        m_audio_s16_frame_cv.notify_one();
+        if(m_audio_s16_frame.p_data)
+            NDIlib_util_send_send_audio_interleaved_16s(m_send_instance, &m_audio_s16_frame);
+        
         DEBUG("Audio S16 frame sent");
     }
 

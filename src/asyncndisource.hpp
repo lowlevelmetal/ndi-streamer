@@ -81,18 +81,18 @@ private:
 	AtmoicNdiSendInstance m_send_instance = nullptr;
 	AtomicAvException m_last_error;
 	std::string m_name;
+
 	std::thread m_video_thread;
 	std::thread m_audio_s16_thread;
+
 	std::atomic<bool> m_shutdown_video_thread = false;
 	std::atomic<bool> m_shutdown_audio_s16_thread = false;
 
-	bool m_thread_using_video_frame = false;
 	std::mutex m_video_frame_mtx;
-	std::condition_variable m_video_frame_cv;
-	
-	bool m_thread_using_audio_s16_frame = false;
 	std::mutex m_audio_s16_frame_mtx;
-	std::condition_variable m_audio_s16_frame_cv;
+
+	std::condition_variable m_video_frame_ready;
+	std::condition_variable m_audio_s16_frame_ready;
 
 	NDIlib_video_frame_v2_t m_video_frame{};
 	NDIlib_audio_frame_interleaved_16s_t m_audio_s16_frame{};
