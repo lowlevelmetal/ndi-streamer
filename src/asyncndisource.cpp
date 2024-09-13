@@ -75,10 +75,12 @@ AvException AsyncNdiSource::LoadVideoFrame(AVFrame *frame, AVPixelFormat format,
     m_video_buffer_mutex.lock();
 
     if(m_video_frames.size() >= MAX_FRAMES_IN_BUFFER) {
-        DEBUG("Video frame buffer is full");
+        //DEBUG("Video frame buffer is full");
         m_video_buffer_mutex.unlock();
         return AvException(AvError::BUFFERFULL);
     }
+
+    m_video_buffer_mutex.unlock();
 
     auto ret = m_CopyVideoFrame({frame, format, time_base, fps}, video_frame);
     if(ret != AvError::NOERROR) {
@@ -86,6 +88,8 @@ AvException AsyncNdiSource::LoadVideoFrame(AVFrame *frame, AVPixelFormat format,
         m_video_buffer_mutex.unlock();
         return AvException(ret);
     }
+
+    m_video_buffer_mutex.lock();
 
     m_video_frames.push_back(video_frame);
 
@@ -103,10 +107,12 @@ AvException AsyncNdiSource::LoadAudioFrame(AVFrame *frame, const AVRational &tim
     m_audio_buffer_mutex.lock();
 
     if(m_audio_frames.size() >= MAX_FRAMES_IN_BUFFER) {
-        DEBUG("Audio frame buffer is full");
+        //DEBUG("Audio frame buffer is full");
         m_audio_buffer_mutex.unlock();
         return AvException(AvError::BUFFERFULL);
     }
+
+    m_audio_buffer_mutex.unlock();
 
     auto ret = m_CopyAudioFrame({frame, time_base}, audio_frame);
     if(ret != AvError::NOERROR) {
@@ -114,6 +120,8 @@ AvException AsyncNdiSource::LoadAudioFrame(AVFrame *frame, const AVRational &tim
         m_audio_buffer_mutex.unlock();
         return AvException(ret);
     }
+
+    m_audio_buffer_mutex.lock();
 
     m_audio_frames.push_back(audio_frame);
 
@@ -222,7 +230,7 @@ void AsyncNdiSource::m_VideoThread() {
         
         // If queue is empty, unlock and continue
         if(m_video_frames.empty()) {
-            DEBUG("Video frame queue is empty");
+            //DEBUG("Video frame queue is empty");
             m_video_buffer_mutex.unlock();
             continue;
         }
@@ -287,9 +295,7 @@ void AsyncNdiSource::m_VideoThread() {
         video_frame.p_data = m_video_frame.frame->data[0];
         video_frame.line_stride_in_bytes = m_video_frame.frame->linesize[0];
 
-        m_ndi_mutex.lock();
         NDIlib_send_send_video_v2(m_ndi_send_instance, &video_frame);
-        m_ndi_mutex.unlock();
 
         // Free the frame
         m_FreeAVFrame(m_video_frame.frame);
@@ -306,7 +312,7 @@ void AsyncNdiSource::m_AudioThread() {
         
         // If queue is empty, unlock and continue
         if(m_audio_frames.empty()) {
-            DEBUG("Audio queue is empty, continuing");
+            //DEBUG("Audio queue is empty, continuing");
             m_audio_buffer_mutex.unlock();
             continue;
         }
@@ -362,9 +368,7 @@ void AsyncNdiSource::m_AudioThread() {
 
         audio_frame.p_data = audio_buffer;
 
-        m_ndi_mutex.lock();
         NDIlib_util_send_send_audio_interleaved_16s(m_ndi_send_instance, &audio_frame);
-        m_ndi_mutex.unlock();
 
         delete[] audio_buffer;
 

@@ -24,7 +24,7 @@ extern "C" {
 #include "decoder.hpp"
 #include "ndi.hpp"
 
-#define MAX_FRAMES_IN_BUFFER 30
+#define MAX_FRAMES_IN_BUFFER 5
 
 namespace AV::Utils {
 
@@ -80,9 +80,6 @@ private:
     // Use these mutexes when accessing shared memory
     std::mutex m_audio_buffer_mutex;
     std::mutex m_video_buffer_mutex;
-
-    // Use this mutexes when using NDI functions
-    std::mutex m_ndi_mutex;
 
     // Set this to true to stop the threads
     std::atomic<bool> m_shutdown = false;

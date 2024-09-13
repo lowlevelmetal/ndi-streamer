@@ -103,9 +103,9 @@ int main(int argc, char **argv) {
     DEBUG("Process Next Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
     DEBUG("FPS: %f", fps);
     DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
-    auto target_fps = ndiavserver->GetTargetFramerate()-1.0;
+    auto target_fps = ndiavserver->GetTargetFramerate();
     if (fps < target_fps) {
-        FATAL("FPS DIP BELOW %lf!", target_fps);
+        DEBUG("FPS DIP BELOW %lf!", target_fps);
     }
 #endif
     }
