@@ -8,6 +8,7 @@
 #pragma once
 
 #include <exception>
+#include <atomic>
 
 namespace AV::Utils {
 
@@ -41,6 +42,10 @@ enum class AvError {
     FRAMEGETBUFFER,
     SWRCONFIG,
     STREAMCOUNT,
+    NDISOURCECREATE,
+    FRAMEREF,
+    SAMPLECOPY,
+    BUFFERFULL,
 };
 
 /**
@@ -57,5 +62,7 @@ public:
 private:
     AvError m_errcode;
 };
+
+using AtomicAvException = std::atomic<AvError>;
 
 } // namespace AV::Utils
