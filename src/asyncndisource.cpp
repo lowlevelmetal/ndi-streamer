@@ -224,7 +224,8 @@ AvError AsyncNdiSource::m_CopyVideoFrame(const VideoFrameInfo &frame, VideoFrame
 }
 
 void AsyncNdiSource::m_VideoThread() {
-    while(!m_shutdown) {
+    // Loop until shutdown is true and the queue is empty
+    while(!m_shutdown || [this](){ std::unique_lock<std::mutex> lock(m_video_buffer_mutex); return !m_video_frames.empty(); }()) {
         // Copy video frame out of shared memory
         m_video_buffer_mutex.lock();
         
@@ -306,7 +307,8 @@ void AsyncNdiSource::m_VideoThread() {
 
 void AsyncNdiSource::m_AudioThread() {
 
-    while(!m_shutdown) {
+    // Loop until shutdown is true and the queue is empty
+    while(!m_shutdown || [this](){ std::unique_lock<std::mutex> lock(m_audio_buffer_mutex); return !m_audio_frames.empty(); }()) {
         // Copy audio frame out of shared memory
         m_audio_buffer_mutex.lock();
         
