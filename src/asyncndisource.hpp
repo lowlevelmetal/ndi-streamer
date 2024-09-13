@@ -93,6 +93,14 @@ private:
     // Thread local storage
     AudioFrameInfo m_audio_frame{};
     VideoFrameInfo m_video_frame{};
+
+    // Condition variables for sleeping
+    std::mutex m_audio_sleep_mutex;
+    std::mutex m_video_sleep_mutex;
+    std::condition_variable m_audio_cv;
+    std::condition_variable m_video_cv;
+    std::atomic<bool> m_audio_thread_sleeping = false;
+    std::atomic<bool> m_video_thread_sleeping = false;
 };
 
 } // namespace AV::Utils
