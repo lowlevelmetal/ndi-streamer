@@ -27,6 +27,7 @@ AsyncNdiSource::~AsyncNdiSource() {
     // Stop the threads
     m_shutdown = true;
 
+    // Just incase the threads are sleeping, wake them up
     m_audio_cv.notify_one();
     m_video_cv.notify_one();
 
@@ -237,9 +238,10 @@ void AsyncNdiSource::m_VideoThread() {
             if (m_video_frames.empty()) {
                 lock.unlock();
 
+                // Take a nap
                 m_video_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_video_sleep_mutex);
-                m_video_cv.wait_for(lock, std::chrono::milliseconds(500));
+                m_video_cv.wait(lock);
 
                 DEBUG("Video thread woke up");
 
@@ -330,9 +332,10 @@ void AsyncNdiSource::m_AudioThread() {
             if (m_audio_frames.empty()) {
                 lock.unlock();
 
+                // Take a nap
                 m_audio_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_audio_sleep_mutex);
-                m_audio_cv.wait_for(lock, std::chrono::milliseconds(500));
+                m_audio_cv.wait(lock);
                 DEBUG("Audio thread woke up");
 
                 continue;

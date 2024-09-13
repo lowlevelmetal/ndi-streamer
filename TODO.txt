@@ -1,3 +1,5 @@
 TODO List
 	- Does PTS even work? Investigate!
 	- Multithread NDI so compression gets the flying fuck out of the way
+		- Clean up this code!
+			- Replace condition_variables with something more fitting
