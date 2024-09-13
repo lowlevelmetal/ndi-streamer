@@ -20,7 +20,7 @@ add_executable(decoder_test decoder_test.cpp ../src/decoder.cpp ../src/averror.c
 add_executable(pixelencoder_test pixelencoder_test.cpp ../src/pixelencoder.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(audioresampler_test audioresampler_test.cpp ../src/audioresampler.cpp ../src/averror.cpp ../src/decoder ../src/demuxer.cpp)
 add_executable(ndisource_test ndisource_test.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
-add_executable(asyncndisource_test asyncndisource_test.cpp ../src/asyncndisource.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
+add_executable(asyncndisource_test asyncndisource_test.cpp ../src/asyncndisource.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp ../src/conditionalsleep.cpp)
 
 add_dependencies(demuxer_test download_video)
 add_dependencies(decoder_test download_video)
