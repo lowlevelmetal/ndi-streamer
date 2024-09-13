@@ -60,7 +60,21 @@ TEST(AsyncNdiSource, LoadVideoFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
-            auto load_err = ndisource->LoadVideoFrame(encoded_frame, encoder->GetPixelFormat(), streams[0]->time_base, decoder->GetFrameRate());
+
+            ndisource->Start();
+            
+            AV::Utils::AvException load_err;
+            while(1) {
+                load_err = ndisource->LoadVideoFrame(encoded_frame, encoder->GetPixelFormat(), streams[0]->time_base, decoder->GetFrameRate());
+                if (load_err.code() != 0) {
+                    if(load_err.code() == (int)AV::Utils::AvError::BUFFERFULL) {
+                        continue;
+                    }
+                    
+                    break;
+                }
+            }
+            
             EXPECT_EQ(load_err.code(), 0);
         }
     }

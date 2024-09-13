@@ -42,6 +42,10 @@ enum class AvError {
     FRAMEGETBUFFER,
     SWRCONFIG,
     STREAMCOUNT,
+    NDISOURCECREATE,
+    FRAMEREF,
+    SAMPLECOPY,
+    BUFFERFULL,
 };
 
 /**

@@ -74,6 +74,14 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error configuring frame";
     case AvError::STREAMCOUNT:
         return DEMUXSTR " Incorrect number of streams";
+    case AvError::NDISOURCECREATE:
+        return DEMUXSTR " Error creating NDI source";
+    case AvError::FRAMEREF:
+        return DEMUXSTR " Error referencing frame";
+    case AvError::SAMPLECOPY:
+        return DEMUXSTR " Error copying samples";
+    case AvError::BUFFERFULL:
+        return DEMUXSTR " Buffer is full";
     default:
         return DEMUXSTR " Unknown error";
     }
