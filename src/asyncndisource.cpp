@@ -241,7 +241,7 @@ void AsyncNdiSource::m_VideoThread() {
                 // Take a nap
                 m_video_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_video_sleep_mutex);
-                m_video_cv.wait(lock);
+                m_video_cv.wait_for(lock, std::chrono::milliseconds(100));
 
                 DEBUG("Video thread woke up");
 
@@ -335,7 +335,7 @@ void AsyncNdiSource::m_AudioThread() {
                 // Take a nap
                 m_audio_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_audio_sleep_mutex);
-                m_audio_cv.wait(lock);
+                m_audio_cv.wait_for(lock, std::chrono::milliseconds(100));
                 DEBUG("Audio thread woke up");
 
                 continue;
