@@ -5,6 +5,8 @@
  * @author Matthew Todd Geiger
  */
 
+#pragma once
+
 #include <string>
 #include <memory>
 #include <optional>
@@ -16,8 +18,6 @@ extern "C" {
 }
 
 #include "averror.hpp"
-
-#pragma once
 
 /**
  * @brief The AV::Utils namespace contains utilities for audio and video processing.
