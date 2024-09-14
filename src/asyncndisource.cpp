@@ -12,6 +12,8 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
+#define MAX_FRAMES_IN_BUFFER 100
+
 namespace AV::Utils {
 
 AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {

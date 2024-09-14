@@ -24,8 +24,6 @@ extern "C" {
 #include "decoder.hpp"
 #include "ndi.hpp"
 
-#define MAX_FRAMES_IN_BUFFER 5
-
 namespace AV::Utils {
 
 class AsyncNdiSource;

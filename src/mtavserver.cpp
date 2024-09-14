@@ -8,7 +8,7 @@
 #include "mtavserver.hpp"
 #include "macro.hpp"
 
-#define MAX_QUEUE 5
+#define MAX_QUEUE 100
 
 namespace AV::Utils {
 
@@ -26,6 +26,10 @@ MtAvServer::~MtAvServer() {
 
 	// Stop the threads
 	m_shutdown = true;
+
+	// Just incase the threads are sleeping, wake them up
+	m_audio_cv.notify_one();
+	m_video_cv.notify_one();
 
 	if (m_audio_thread.joinable()) {
 		m_audio_thread.join();
@@ -105,16 +109,20 @@ void MtAvServer::start() {
 }
 
 AvError MtAvServer::m_CopyPacketToVideoQueue(AVPacket *src_packet) {
+	AvError err = AvError::NOERROR;
+	AVPacket *packet = nullptr;
+
 
 	// Check if queue is filled
 	{
 		std::unique_lock<std::mutex> lock(m_video_buffer_mutex);
 		if (m_video_packets.size() >= MAX_QUEUE) {
-			return AvError::BUFFERFULL;
+			err = AvError::BUFFERFULL;
+			goto END;
 		}
 	}
 
-	AVPacket *packet = av_packet_alloc();
+	packet = av_packet_alloc();
 	if (!packet) {
 		return AvError::PACKETALLOC;
 	}
@@ -129,20 +137,29 @@ AvError MtAvServer::m_CopyPacketToVideoQueue(AVPacket *src_packet) {
 		m_video_packets.push_back(packet);
 	}
 
-	return AvError::NOERROR;
+END:
+	if(m_video_thread_sleeping) {
+		m_video_cv.notify_one();
+		m_video_thread_sleeping = false;
+	}
+
+	return err;
 }
 
 AvError MtAvServer::m_CopyPacketToAudioQueue(AVPacket *src_packet) {
+	AvError err = AvError::NOERROR;
+	AVPacket *packet = nullptr;
 
 	// Check if queue is filled
 	{
 		std::unique_lock<std::mutex> lock(m_audio_buffer_mutex);
 		if (m_audio_packets.size() >= MAX_QUEUE) {
-			return AvError::BUFFERFULL;
+			err = AvError::BUFFERFULL;
+			goto END;
 		}
 	}
 
-	AVPacket *packet = av_packet_alloc();
+	packet = av_packet_alloc();
 	if (!packet) {
 		return AvError::PACKETALLOC;
 	}
@@ -157,7 +174,13 @@ AvError MtAvServer::m_CopyPacketToAudioQueue(AVPacket *src_packet) {
 		m_audio_packets.push_back(packet);
 	}
 
-	return AvError::NOERROR;
+END:
+	if(m_audio_thread_sleeping) {
+		m_audio_cv.notify_one();
+		m_audio_thread_sleeping = false;
+	}
+
+	return err;
 }
 
 void MtAvServer::m_VideoThread() {
@@ -180,6 +203,11 @@ void MtAvServer::m_VideoThread() {
 			if (m_video_packets.empty()) {
 				lock.unlock();
 				av_packet_free(&packet);
+
+				m_video_thread_sleeping = true;
+				std::unique_lock<std::mutex> lock(m_video_sleep_mutex);
+				m_video_cv.wait_for(lock, std::chrono::milliseconds(100));
+
 				continue;
 			}
 
@@ -267,6 +295,11 @@ void MtAvServer::m_AudioThread() {
 			if (m_audio_packets.empty()) {
 				lock.unlock();
 				av_packet_free(&packet);
+
+				m_audio_thread_sleeping = true;
+				std::unique_lock<std::mutex> lock(m_audio_sleep_mutex);
+				m_audio_cv.wait_for(lock, std::chrono::milliseconds(100));
+
 				continue;
 			}
 
