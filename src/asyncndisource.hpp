@@ -99,6 +99,9 @@ private:
     std::condition_variable m_video_cv;
     std::atomic<bool> m_audio_thread_sleeping = false;
     std::atomic<bool> m_video_thread_sleeping = false;
+
+    // Variable to track when video started
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_video_start_time;
 };
 
 } // namespace AV::Utils
