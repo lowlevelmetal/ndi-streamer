@@ -66,6 +66,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
             if (send_err.code() != (int)AvError::NOERROR) {
                 if(send_err.code() == (int)AvError::BUFFERFULL) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     continue;
                 }
                 
@@ -101,6 +102,7 @@ AvException NdiAvServer::ProcessNextFrame() {
             auto send_err = m_ndi_source->LoadAudioFrame(resampled_frame, m_audio_time_base);
             if (send_err.code() != (int)AvError::NOERROR) {
                 if (send_err.code() == (int)AvError::BUFFERFULL) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     continue;
                 }
                 

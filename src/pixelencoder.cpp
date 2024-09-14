@@ -46,6 +46,7 @@ PixelEncoderOutput PixelEncoder::Encode(AVFrame *frame) {
     m_dst_frame->width = m_config.dst_width;
     m_dst_frame->height = m_config.dst_height;
     m_dst_frame->format = m_config.dst_pix_fmt;
+    m_dst_frame->pts = frame->pts;
 
     // Scale the frame
     ret = sws_scale(m_sws_ctx, frame->data, frame->linesize, 0, m_config.src_height, m_dst_frame->data, m_dst_frame->linesize);

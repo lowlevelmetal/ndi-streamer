@@ -36,6 +36,7 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
     m_dst_frame->sample_rate = m_config.dstsamplerate;
     m_dst_frame->format = m_config.dstsampleformat;
     m_dst_frame->nb_samples = av_rescale_rnd(swr_get_delay(m_swr_context, m_config.srcsamplerate) + src_frame->nb_samples, m_config.dstsamplerate, m_config.srcsamplerate, AV_ROUND_UP);
+    m_dst_frame->pts = src_frame->pts;
 
     // Allocate the frame
     int ret = av_frame_get_buffer(m_dst_frame, 0);

@@ -17,6 +17,7 @@
 
 // Local includes
 #include "macro.hpp"
+#include "mtavserver.hpp"
 #include "ndiavserver.hpp"
 
 typedef struct CommandLineArguments {
@@ -70,44 +71,26 @@ int main(int argc, char **argv) {
     }
 
     // Create NDI AV Server
-    auto [ndiavserver, ndiavserver_err] = AV::Utils::NdiAvServer::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+    auto [ndiavserver, ndiavserver_err] = AV::Utils::MtAvServer::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     if (ndiavserver_err.code() != (int)AV::Utils::AvError::NOERROR) {
         ERROR("Error creating NDI AV Server: %s", ndiavserver_err.what());
         return EXIT_FAILURE;
     }
-
-    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
 
 #ifdef _DEBUG
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
 #endif
 
+    ndiavserver->start();
+
     // Main loop
     while(1) {
-#ifdef _DEBUG
-    // Profile function
-    auto time_start = std::chrono::high_resolution_clock::now();
-#endif
-
         auto err = ndiavserver->ProcessNextFrame();
         if (err.code() != (int)AV::Utils::AvError::NOERROR) {
             ERROR("Error processing next frame: %s", err.what());
             break;
         }
-
-#ifdef _DEBUG
-    // Profile function
-    auto time_end = std::chrono::high_resolution_clock::now();
-    auto fps = 1.0 / std::chrono::duration<double>(time_end - time_start).count();
-    DEBUG("Process Next Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
-    DEBUG("FPS: %f", fps);
-    DEBUG("Target Frame Rate: %f", ndiavserver->GetTargetFramerate());
-    auto target_fps = ndiavserver->GetTargetFramerate();
-    if (fps < target_fps) {
-        DEBUG("FPS DIP BELOW %lf!", target_fps);
-    }
-#endif
     }
 
     fflush(stdout);

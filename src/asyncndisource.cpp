@@ -12,6 +12,8 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
+#define MAX_FRAMES_IN_BUFFER 100
+
 namespace AV::Utils {
 
 AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {
@@ -27,6 +29,7 @@ AsyncNdiSource::~AsyncNdiSource() {
     // Stop the threads
     m_shutdown = true;
 
+    // Just incase the threads are sleeping, wake them up
     m_audio_cv.notify_one();
     m_video_cv.notify_one();
 
@@ -63,6 +66,9 @@ AsyncNdiSourceResult AsyncNdiSource::Create(const std::string &ndi_source_name) 
 void AsyncNdiSource::Start() {
     if (threads_start)
         return;
+
+    // Set the starting time point
+    m_video_start_time = std::chrono::high_resolution_clock::now();
 
     m_audio_thread = std::thread(&AsyncNdiSource::m_AudioThread, this);
     m_video_thread = std::thread(&AsyncNdiSource::m_VideoThread, this);
@@ -237,9 +243,10 @@ void AsyncNdiSource::m_VideoThread() {
             if (m_video_frames.empty()) {
                 lock.unlock();
 
+                // Take a nap
                 m_video_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_video_sleep_mutex);
-                m_video_cv.wait_for(lock, std::chrono::milliseconds(500));
+                m_video_cv.wait_for(lock, std::chrono::milliseconds(100));
 
                 DEBUG("Video thread woke up");
 
@@ -290,7 +297,7 @@ void AsyncNdiSource::m_VideoThread() {
             double pts_in_seconds = m_video_frame.frame->pts * av_q2d(m_video_frame.time_base);
             int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
             video_frame.timecode = ndi_timecode;
-        } else if (m_video_frame.frame->pkt_dts) { // USE DTS
+        } else if (m_video_frame.frame->pkt_dts != AV_NOPTS_VALUE) { // USE DTS
             DEBUG("Using DTS for video timing");
             double dts_in_seconds = m_video_frame.frame->pkt_dts * av_q2d(m_video_frame.time_base);
             int64_t ndi_timecode = (int64_t)(dts_in_seconds * 10000000.0);
@@ -308,6 +315,17 @@ void AsyncNdiSource::m_VideoThread() {
         video_frame.yres = m_video_frame.frame->height;
         video_frame.p_data = m_video_frame.frame->data[0];
         video_frame.line_stride_in_bytes = m_video_frame.frame->linesize[0];
+
+        // Use pts to sleep until right before we need to send out this frame
+        if (m_video_frame.frame->pts != AV_NOPTS_VALUE) {
+            auto now = std::chrono::high_resolution_clock::now();
+            double pts_in_seconds = m_video_frame.frame->pts * av_q2d(m_video_frame.time_base);
+            double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
+            if (time_to_sleep > 0) {
+                DEBUG("Sleeping for %f seconds", time_to_sleep);
+                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
+            }
+        }
 
         NDIlib_send_send_video_v2(m_ndi_send_instance, &video_frame);
 
@@ -330,9 +348,10 @@ void AsyncNdiSource::m_AudioThread() {
             if (m_audio_frames.empty()) {
                 lock.unlock();
 
+                // Take a nap
                 m_audio_thread_sleeping = true;
                 std::unique_lock<std::mutex> lock(m_audio_sleep_mutex);
-                m_audio_cv.wait_for(lock, std::chrono::milliseconds(500));
+                m_audio_cv.wait_for(lock, std::chrono::milliseconds(100));
                 DEBUG("Audio thread woke up");
 
                 continue;
@@ -372,7 +391,7 @@ void AsyncNdiSource::m_AudioThread() {
             double pts_in_seconds = m_audio_frame.frame->pts * av_q2d(m_audio_frame.time_base);
             int64_t ndi_timecode = (int64_t)(pts_in_seconds * 10000000.0);
             audio_frame.timecode = ndi_timecode;
-        } else if (m_audio_frame.frame->pkt_dts) { // USE DTS
+        } else if (m_audio_frame.frame->pkt_dts != AV_NOPTS_VALUE) { // USE DTS
             DEBUG("Using DTS for audio timecode");
             double dts_in_seconds = m_audio_frame.frame->pkt_dts * av_q2d(m_audio_frame.time_base);
             int64_t ndi_timecode = (int64_t)(dts_in_seconds * 10000000.0);
@@ -391,6 +410,17 @@ void AsyncNdiSource::m_AudioThread() {
         memcpy(audio_buffer, m_audio_frame.frame->data[0], sizeof(int16_t) * audio_frame.no_channels * audio_frame.no_samples);
 
         audio_frame.p_data = audio_buffer;
+
+        // Using the timebase and starting time to sleep until right before we need to send out this frame
+        if(m_audio_frame.frame->pts != AV_NOPTS_VALUE) {
+            auto now = std::chrono::high_resolution_clock::now();
+            double pts_in_seconds = m_audio_frame.frame->pts * av_q2d(m_audio_frame.time_base);
+            double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
+            if (time_to_sleep > 0) {
+                DEBUG("Sleeping for %f seconds", time_to_sleep);
+                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
+            }
+        }
 
         NDIlib_util_send_send_audio_interleaved_16s(m_ndi_send_instance, &audio_frame);
 

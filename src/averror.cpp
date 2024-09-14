@@ -82,6 +82,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error copying samples";
     case AvError::BUFFERFULL:
         return DEMUXSTR " Buffer is full";
+    case AvError::PACKETREF:
+        return DEMUXSTR " Error referencing packet";
     default:
         return DEMUXSTR " Unknown error";
     }
