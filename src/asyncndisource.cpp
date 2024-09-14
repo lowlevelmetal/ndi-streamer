@@ -316,27 +316,11 @@ void AsyncNdiSource::m_VideoThread() {
         video_frame.p_data = m_video_frame.frame->data[0];
         video_frame.line_stride_in_bytes = m_video_frame.frame->linesize[0];
 
-        // Using the timebase and starting time to sleep until right before we need to send out this frame
-        if (m_video_frame.time_base.num != 0 && m_video_frame.time_base.den != 0) {
+        // Use pts to sleep until right before we need to send out this frame
+        if (m_video_frame.frame->pts != AV_NOPTS_VALUE) {
             auto now = std::chrono::high_resolution_clock::now();
             double pts_in_seconds = m_video_frame.frame->pts * av_q2d(m_video_frame.time_base);
             double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
-                DEBUG("Sleeping for %f seconds", time_to_sleep);
-                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
-            }
-        } else if (m_video_frame.frame->pts != AV_NOPTS_VALUE) {
-            auto now = std::chrono::high_resolution_clock::now();
-            double dts_in_seconds = m_video_frame.frame->pts * av_q2d(m_video_frame.time_base);
-            double time_to_sleep = dts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
-                DEBUG("Sleeping for %f seconds", time_to_sleep);
-                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
-            }
-        } else if(m_video_frame.frame->pkt_dts != AV_NOPTS_VALUE) {
-            auto now = std::chrono::high_resolution_clock::now();
-            double dts_in_seconds = m_video_frame.frame->pkt_dts * av_q2d(m_video_frame.time_base);
-            double time_to_sleep = dts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
             if (time_to_sleep > 0) {
                 DEBUG("Sleeping for %f seconds", time_to_sleep);
                 std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
@@ -428,26 +412,10 @@ void AsyncNdiSource::m_AudioThread() {
         audio_frame.p_data = audio_buffer;
 
         // Using the timebase and starting time to sleep until right before we need to send out this frame
-        if (m_audio_frame.time_base.num != 0 && m_audio_frame.time_base.den != 0) {
+        if(m_audio_frame.frame->pts != AV_NOPTS_VALUE) {
             auto now = std::chrono::high_resolution_clock::now();
             double pts_in_seconds = m_audio_frame.frame->pts * av_q2d(m_audio_frame.time_base);
             double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
-                DEBUG("Sleeping for %f seconds", time_to_sleep);
-                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
-            }
-        } else if(m_audio_frame.frame->pts != AV_NOPTS_VALUE) {
-            auto now = std::chrono::high_resolution_clock::now();
-            double pts_in_seconds = m_audio_frame.frame->pts * av_q2d(m_audio_frame.time_base);
-            double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
-                DEBUG("Sleeping for %f seconds", time_to_sleep);
-                std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
-            }
-        } else if (m_audio_frame.frame->pkt_dts != AV_NOPTS_VALUE) {
-            auto now = std::chrono::high_resolution_clock::now();
-            double dts_in_seconds = m_audio_frame.frame->pkt_dts * av_q2d(m_audio_frame.time_base);
-            double time_to_sleep = dts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
             if (time_to_sleep > 0) {
                 DEBUG("Sleeping for %f seconds", time_to_sleep);
                 std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
