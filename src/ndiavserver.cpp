@@ -10,10 +10,6 @@
 
 namespace AV::Utils {
 
-double NdiAvServer::GetTargetFramerate() {
-    return m_video_decoder->GetFPS();
-}
-
 AvException NdiAvServer::ProcessNextFrame() {
     static bool still_decoding_video = false;
     static bool still_decoding_audio = false;

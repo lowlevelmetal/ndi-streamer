@@ -7,15 +7,18 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
-
-extern "C" {
-    #include <libavcodec/avcodec.h>
-}
-
+// Local dependencies
 #include "averror.hpp"
 #include "demuxer.hpp"
+
+// 3rd party dependencies
+extern "C" {
+#include <libavcodec/avcodec.h>
+}
+
+// Standard C++ dependencies
+#include <memory>
+#include <string>
 
 namespace AV::Utils {
 
@@ -32,25 +35,54 @@ private:
     Decoder(AVCodecParameters *codecpar);
 
 public:
+    /**
+     * @brief Destroy the Decoder:: Decoder object
+     */
     ~Decoder();
 
-    // Factory methods
+    /**
+     * @brief Create a Decoder object
+     *
+     * @param codecpar codec parameters
+     * @return DecoderResult
+     */
     static DecoderResult Create(AVCodecParameters *codecpar);
 
-    // Decode frames
+    // Setters
+    /**
+     * @brief Fill the decoder with a packet
+     *
+     * @param packet The packet to fill the decoder with
+     * @return AvException
+     */
     AvException FillDecoder(AVPacket *packet);
+
+    /**
+     * @brief Decode a packet. If the decoder needs another packet, it will return
+     * an error code of DECODEREXHAUSTED
+     *
+     * @return DecoderOutput
+     */
     DecoderOutput Decode();
 
-    // Get FPS From context
-    double GetFPS();
+    // Getters
+    /**
+     * @brief Get the frame rate of the decoder
+     *
+     * @return CodecFrameRate
+     */
     CodecFrameRate GetFrameRate();
-
 
 private:
     AvError m_Initialize();
 
+    // Store the codec parameters
     AVCodecParameters *m_codecpar = nullptr;
+
+    // This is the codec context that ffmpeg uses to decode the media file
     AVCodecContext *m_codec = nullptr;
+
+    // This is the last frame that was decoded
     AVFrame *m_last_frame = nullptr;
 };
 

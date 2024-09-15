@@ -10,12 +10,15 @@
 
 namespace AV::Utils {
 
+/**
+ * @brief Get the frame rate of the decoder
+ *
+ * @return CodecFrameRate
+ */
 CodecFrameRate Decoder::GetFrameRate() {
-    return {m_codec->framerate.num, m_codec->framerate.den};
-}
+    FUNCTION_CALL_DEBUG();
 
-double Decoder::GetFPS() {
-    return av_q2d(m_codec->framerate);
+    return {m_codec->framerate.num, m_codec->framerate.den};
 }
 
 /**
@@ -25,6 +28,8 @@ double Decoder::GetFPS() {
  * @return AvException
  */
 AvException Decoder::FillDecoder(AVPacket *packet) {
+    FUNCTION_CALL_DEBUG();
+
     int ret = avcodec_send_packet(m_codec, packet);
     if (ret < 0) {
         PRINT_FFMPEG_ERR(ret);
@@ -42,6 +47,8 @@ AvException Decoder::FillDecoder(AVPacket *packet) {
  * @return DecoderOutput
  */
 DecoderOutput Decoder::Decode() {
+    FUNCTION_CALL_DEBUG();
+
     // Recieve frame from decoder
     int ret = avcodec_receive_frame(m_codec, m_last_frame);
     if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -55,8 +62,6 @@ DecoderOutput Decoder::Decode() {
     return {m_last_frame, AvException(AvError::NOERROR)};
 }
 
-// Factory methods
-
 /**
  * @brief Create a Decoder object
  *
@@ -64,8 +69,9 @@ DecoderOutput Decoder::Decode() {
  * @return DecoderResult
  */
 DecoderResult Decoder::Create(AVCodecParameters *codecpar) {
-    DEBUG("Decoder factory called");
-    AvException error(AvError::NOERROR);
+    FUNCTION_CALL_DEBUG();
+
+    AvException error;
 
     // Create a new decoder object, return nullopt if error
     try {
@@ -84,7 +90,7 @@ DecoderResult Decoder::Create(AVCodecParameters *codecpar) {
  * @param codec_id codec ID
  */
 Decoder::Decoder(AVCodecParameters *codecpar) : m_codecpar(codecpar) {
-    DEBUG("Constructing Decoder object");
+    FUNCTION_CALL_DEBUG();
 
     AvError err = m_Initialize();
     if (err != AvError::NOERROR) {
@@ -97,7 +103,7 @@ Decoder::Decoder(AVCodecParameters *codecpar) : m_codecpar(codecpar) {
  * @brief Destroy the Decoder:: Decoder object
  */
 Decoder::~Decoder() {
-    DEBUG("Destroying Decoder object");
+    FUNCTION_CALL_DEBUG();
 
     // Free the frame
     if (m_last_frame) {
@@ -118,6 +124,7 @@ Decoder::~Decoder() {
  * @return AvError
  */
 AvError Decoder::m_Initialize() {
+    FUNCTION_CALL_DEBUG();
 
     // Find the appropriate decoder
     const AVCodec *codec = avcodec_find_decoder(m_codecpar->codec_id);
