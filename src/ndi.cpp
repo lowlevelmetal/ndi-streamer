@@ -12,8 +12,11 @@
 namespace AV::Utils {
     int Ndi::m_open_instances = 0;
 
+    /**
+     * @brief Construct a new Ndi object
+     */
     Ndi::Ndi() {
-        DEBUG("Ndi constructor called");
+        FUNCTION_CALL_DEBUG();
 
         if(!m_open_instances) {
             DEBUG("NDI library has not been initialized yet, initializing now");
@@ -23,8 +26,11 @@ namespace AV::Utils {
         m_open_instances++;
     }
 
+    /**
+     * @brief Destroy the Ndi object
+     */
     Ndi::~Ndi() {
-        DEBUG("Ndi destructor called");
+        FUNCTION_CALL_DEBUG();
 
         m_open_instances--;
 

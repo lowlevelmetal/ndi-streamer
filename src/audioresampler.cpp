@@ -81,8 +81,9 @@ FUNCTION_CALL_DEBUG();
  * @return AudioResamplerResult The AudioResampler object
  */
 AudioResamplerResult AudioResampler::Create(const AudioResamplerConfig &config) {
-    DEBUG("AudioResampler factory called");
-    AvException error(AvError::NOERROR);
+    FUNCTION_CALL_DEBUG();
+
+    AvException error;
 
     // Create a new audio resampler object, return nullopt if error
     try {
@@ -98,7 +99,8 @@ AudioResamplerResult AudioResampler::Create(const AudioResamplerConfig &config) 
  * @brief Construct a new AudioResampler object
  */
 AudioResampler::AudioResampler(const AudioResamplerConfig &config) : m_config(config) {
-    DEBUG("Constructing AudioResampler object");
+    FUNCTION_CALL_DEBUG();
+
     AvError err = m_Initialize();
     if (err != AvError::NOERROR) {
         throw err;
@@ -109,7 +111,7 @@ AudioResampler::AudioResampler(const AudioResamplerConfig &config) : m_config(co
  * @brief Destroy the AudioResampler object
  */
 AudioResampler::~AudioResampler() {
-    DEBUG("Destroying AudioResampler object");
+    FUNCTION_CALL_DEBUG();
 
     if (m_dst_frame) {
         DEBUG("Freeing frame");

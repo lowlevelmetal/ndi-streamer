@@ -7,16 +7,20 @@
 
 #pragma once
 
-#include <memory>
+// local dependencies
+#include "averror.hpp"
 
+// 3rd party depednencies
 extern "C" {
 #include <libswresample/swresample.h>
 }
 
-#include "averror.hpp"
+// Standard c++ dependencies
+#include <memory>
 
 namespace AV::Utils {
 
+// forward declarations and type definitions
 class AudioResampler;
 using AudioResamplerResult = std::pair<std::unique_ptr<AudioResampler>, AvException>;
 using AudioResamplerOutput = std::pair<AVFrame *, AvException>;
