@@ -57,7 +57,7 @@ ReadFrameResult Demuxer::ReadFrame() {
  * @brief Create a Demuxer object
  *
  * @param path path to media file
- * @return std::pair<std::shared_ptr<Demuxer>, AvException>
+ * @return DemuxerResult
  */
 DemuxerResult Demuxer::Create(const std::string &path) {
     FUNCTION_CALL_DEBUG();
