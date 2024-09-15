@@ -212,13 +212,15 @@ void MtAvServer::m_VideoThread() {
 			}
 
 			// Copy packet
-			auto packet = m_video_packets.front();
+			auto packet_ref = m_video_packets.front();
 
-			if (av_packet_ref(packet, m_video_packets.front()) < 0) {
+			if (av_packet_ref(packet, packet_ref) < 0) {
 				DEBUG("Failed to copy packet");
 				av_packet_free(&packet);
 				break;
 			}
+
+			av_packet_free(&packet_ref);
 
 			m_video_packets.pop_front();
 
@@ -304,13 +306,15 @@ void MtAvServer::m_AudioThread() {
 			}
 
 			// Copy packet
-			auto packet = m_audio_packets.front();
+			auto packet_ref = m_audio_packets.front();
 
-			if (av_packet_ref(packet, m_audio_packets.front()) < 0) {
+			if (av_packet_ref(packet, packet_ref) < 0) {
 				DEBUG("Failed to copy packet");
 				av_packet_free(&packet);
 				break;
 			}
+			
+			av_packet_free(&packet_ref);
 
 			m_audio_packets.pop_front();
 
