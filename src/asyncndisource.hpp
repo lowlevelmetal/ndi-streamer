@@ -20,7 +20,6 @@ extern "C" {
 }
 
 #include "averror.hpp"
-#include "conditionalsleep.hpp"
 #include "decoder.hpp"
 #include "ndi.hpp"
 
