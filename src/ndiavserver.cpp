@@ -59,7 +59,7 @@ AvException NdiAvServer::ProcessNextFrame() {
         }
 
         while(1) {
-            auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder->GetPixelFormat(), m_video_time_base, m_video_decoder->GetFrameRate());
+            auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder_config.dst_pix_fmt, m_video_time_base, m_video_decoder->GetFrameRate());
             if (send_err.code() != (int)AvError::NOERROR) {
                 if(send_err.code() == (int)AvError::BUFFERFULL) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
