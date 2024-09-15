@@ -16,6 +16,9 @@ extern "C" {
 
 namespace AV::Utils {
 
+/**
+ * @brief Construct a new AsyncNdiSource object
+ */
 AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {
     auto err = m_Initialize();
     if (err != AvError::NOERROR) {
@@ -23,6 +26,9 @@ AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_sourc
     }
 }
 
+/**
+ * @brief Destroy the AsyncNdiSource object
+ */
 AsyncNdiSource::~AsyncNdiSource() {
     DEBUG("AsyncNdiSource destructor called");
 

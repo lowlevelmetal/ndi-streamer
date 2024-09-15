@@ -7,27 +7,34 @@
 
 #pragma once
 
-#include <condition_variable>
-#include <deque>
-#include <memory>
-#include <string>
-#include <thread>
+// Local dependencies
+#include "averror.hpp"
+#include "decoder.hpp"
+#include "ndi.hpp"
 
+// 3rd party dependencies
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/frame.h>
 }
 
-#include "averror.hpp"
-#include "decoder.hpp"
-#include "ndi.hpp"
+// Standard c++ dependencies
+#include <condition_variable>
+#include <deque>
+#include <memory>
+#include <string>
+#include <thread>
 
 namespace AV::Utils {
 
+// Forward declarations and type definitions
 class AsyncNdiSource;
 using AsyncNdiSourceResult = std::pair<std::unique_ptr<AsyncNdiSource>, const AvException>;
 
+/**
+ * @brief The VideoFrameInfo struct contains information about a video frame.
+ */
 typedef struct VideoFrameInfo {
     AVFrame *frame;
 	AVPixelFormat format;
@@ -35,11 +42,17 @@ typedef struct VideoFrameInfo {
 	CodecFrameRate fps;
 } VideoFrameInfo;
 
+/**
+ * @brief The AudioFrameInfo struct contains information about an audio frame.
+ */
 typedef struct AudioFrameInfo {
 	AVFrame *frame;
 	AVRational time_base;
 } AudioFrameInfo;
 
+/**
+ * @brief The AsyncNdiSource class provides utilities for working with NDI asynchronously.
+ */
 class AsyncNdiSource : public Ndi {
 private:
     AsyncNdiSource(const std::string &ndi_source_name);
