@@ -12,7 +12,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
-#define MAX_FRAMES_IN_BUFFER 100
+#define MAX_FRAMES_IN_BUFFER 50
 
 namespace AV::Utils {
 

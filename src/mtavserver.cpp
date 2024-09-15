@@ -8,7 +8,7 @@
 #include "mtavserver.hpp"
 #include "macro.hpp"
 
-#define MAX_QUEUE 100
+#define MAX_QUEUE 50
 
 namespace AV::Utils {
 
