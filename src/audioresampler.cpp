@@ -22,11 +22,17 @@ namespace AV::Utils {
  * @param src_frame The frame to resample
  */
 AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
-
+FUNCTION_CALL_DEBUG();
 #ifdef _DEBUG
     // Profile function
     auto time_start = std::chrono::high_resolution_clock::now();
 #endif
+
+    // Unlike with the pixel encoder, the number of samples(or resolution for the pixel encoder) is not consistent
+    // so we need to reset the frame each time to be safe
+    //
+    // On modern machines this is extermely fast, but maybe in the future we can optimize this
+    // for smaller machines
 
     // Reset frame each time
     av_frame_unref(m_dst_frame);
@@ -38,14 +44,14 @@ AudioResamplerOutput AudioResampler::Resample(AVFrame *src_frame) {
     m_dst_frame->nb_samples = av_rescale_rnd(swr_get_delay(m_swr_context, m_config.srcsamplerate) + src_frame->nb_samples, m_config.dstsamplerate, m_config.srcsamplerate, AV_ROUND_UP);
     m_dst_frame->pts = src_frame->pts;
 
-    // Allocate the frame
+    // Allocate the frame buffer
     int ret = av_frame_get_buffer(m_dst_frame, 0);
     if (ret < 0) {
         PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::FRAMEALLOC)};
     }
 
-    // Configure the context for the frames
+    // Configure the context for the frames, this could also be eventually optimized
     ret = swr_config_frame(m_swr_context, m_dst_frame, src_frame);
     if (ret < 0) {
         PRINT_FFMPEG_ERR(ret);
@@ -122,14 +128,13 @@ AudioResampler::~AudioResampler() {
  * @return AvError
  */
 AvError AudioResampler::m_Initialize() {
+    FUNCTION_CALL_DEBUG();
+
+    // Alloc space for swr context
     m_swr_context = swr_alloc();
     if (!m_swr_context) {
         return AvError::SWRALLOCS;
     }
-
-    // Store number of channels
-    m_src_nb_channels = m_config.srcchannellayout.nb_channels;
-    m_dst_nb_channels = m_config.dstchannellayout.nb_channels;
 
     // Set options
     av_opt_set_chlayout(m_swr_context, "in_channel_layout", &m_config.srcchannellayout, 0);
@@ -145,14 +150,15 @@ AvError AudioResampler::m_Initialize() {
           "Sample Rate: %d\n"
           "Channels: %d\n"
           "Sample Format: %s\n",
-          m_config.srcsamplerate, m_src_nb_channels, av_get_sample_fmt_name(m_config.srcsampleformat));
+          m_config.srcsamplerate, m_config.srcchannellayout.nb_channels, av_get_sample_fmt_name(m_config.srcsampleformat));
 
     DEBUG("Destination Config\n"
           "Sample Rate: %d\n"
           "Channels: %d\n"
           "Sample Format: %s\n",
-          m_config.dstsamplerate, m_dst_nb_channels, av_get_sample_fmt_name(m_config.dstsampleformat));
+          m_config.dstsamplerate, m_config.dstchannellayout.nb_channels, av_get_sample_fmt_name(m_config.dstsampleformat));
 
+    // Initialize the context
     int ret = swr_init(m_swr_context);
     if (ret < 0) {
         PRINT_FFMPEG_ERR(ret);

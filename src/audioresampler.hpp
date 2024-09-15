@@ -38,21 +38,33 @@ private:
     AudioResampler(const AudioResamplerConfig &config);
 
 public:
+    /**
+     * @brief Destroy the AudioResampler object
+     */
     ~AudioResampler();
 
     // Factory methods
+    /**
+     * @brief Create a new AudioResampler object
+     *
+     * @param config The configuration for the AudioResampler object
+     * @return AudioResamplerResult The AudioResampler object
+     */
     static AudioResamplerResult Create(const AudioResamplerConfig &config);
 
+    /**
+     * @brief Resample the audio frame
+     *
+     * @param src_frame The frame to resample
+     */
     AudioResamplerOutput Resample(AVFrame *src_frame);
-    
+
 private:
     AvError m_Initialize();
 
     AudioResamplerConfig m_config;
     SwrContext *m_swr_context = nullptr;
     AVFrame *m_dst_frame = nullptr;
-    uint m_dst_nb_channels = 0;
-    uint m_src_nb_channels = 0;
 };
 
 } // namespace AV::Utils
