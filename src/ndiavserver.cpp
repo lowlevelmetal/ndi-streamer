@@ -155,7 +155,7 @@ AvError NdiAvServer::m_Initialize() {
 
     m_demuxer = std::move(demuxer);
 
-    auto streams = m_demuxer->GetStreams();
+    auto streams = m_demuxer->GetStreamPointers();
     AVCodecParameters *video_codecpar = nullptr;
     AVCodecParameters *audio_codecpar = nullptr;
     uint video_count = 0, audio_count = 0;

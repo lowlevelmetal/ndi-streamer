@@ -269,7 +269,7 @@ void AsyncNdiSource::m_VideoThread() {
             m_video_frames.pop_front();
         }
 
-        DEBUG("Popped video frame from queue"
+        MULTILINE_DEBUG("Popped video frame from queue"
               "Sample rate: %d\n"
               "Channels: %d\n"
               "Samples: %d\n"
@@ -373,7 +373,7 @@ void AsyncNdiSource::m_AudioThread() {
             m_audio_frames.pop_front();
         }
 
-        DEBUG("Popped audio frame from queue"
+        MULTILINE_DEBUG("Popped audio frame from queue"
               "Sample rate: %d\n"
               "Channels: %d\n"
               "Samples: %d\n"

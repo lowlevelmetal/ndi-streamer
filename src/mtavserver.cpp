@@ -380,7 +380,7 @@ AvError MtAvServer::m_Initialize() {
 	m_demuxer = std::move(demuxer);
 
 	// Locate streams
-	auto streams = m_demuxer->GetStreams();
+	auto streams = m_demuxer->GetStreamPointers();
 	AVCodecParameters *video_codec_params = nullptr;
 	AVCodecParameters *audio_codec_params = nullptr;
 	uint video_count = 0, audio_count = 0;

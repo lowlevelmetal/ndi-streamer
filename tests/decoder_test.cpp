@@ -11,7 +11,7 @@
 
 TEST(DecoderTest, CreateDecoderSimple) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
@@ -21,7 +21,7 @@ TEST(DecoderTest, CreateDecoderSimple) {
 
 TEST(DecoderTest, DecodeSinglePacket) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
@@ -52,7 +52,7 @@ TEST(DecoderTest, DecodeSinglePacket) {
 
 TEST(DecoderTest, DecodeMultiplePackets) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     AVCodecParameters *codecpar = streams[0]->codecpar;
 

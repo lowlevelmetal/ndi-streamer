@@ -14,17 +14,6 @@ TEST(DemuxerTest, CreateDemuxerAuto) {
     EXPECT_EQ(demuxer_err.code(), 0);
 }
 
-TEST(DemuxerTest, CreateDemuxerWithConfig) {
-    AV::Utils::DemuxerConfig config;
-    config.path = "testcontent/rickroll.mp4";
-    config.width = 1920;
-    config.height = 1080;
-    config.pixel_format = "yuv420p";
-
-    auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(config);
-    EXPECT_EQ(demuxer_err.code(), 0);
-}
-
 TEST(DemuxerTest, ReadSingleFrame) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
     auto [packet, packet_err] = demuxer->ReadFrame();
@@ -41,9 +30,9 @@ TEST(DemuxerTest, ReadMultipleFrames) {
     EXPECT_EQ(packet_err3.code(), 0);
 }
 
-TEST(DemuxerTest, GetStreams) {
+TEST(DemuxerTest, GetStreamPointers) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
     EXPECT_EQ(streams.size(), 2);
 }
 

@@ -28,7 +28,6 @@ namespace AV::Utils {
 class Demuxer;
 using DemuxerResult = std::pair<std::unique_ptr<Demuxer>, const AvException>;
 using ReadFrameResult = std::pair<AVPacket*, const AvException>;
-using GetStreamResult = std::vector<AVStream *>;
 
 typedef struct DemuxerConfig {
     std::string path{""};
@@ -42,30 +41,28 @@ typedef struct DemuxerConfig {
 class Demuxer {
 private:
     Demuxer(const std::string &path); // I'm keeping the constructor private so that it can only be called by the factory method
-    Demuxer(const DemuxerConfig &config);
 
 public:
     ~Demuxer();
+
+    // For now we'll disable copying and assignment.
+    // In the future we will make sure that these are implemented correctly.
     Demuxer(const Demuxer&) = delete;
     Demuxer& operator=(const Demuxer&) = delete;
 
     // Factory methods
     static DemuxerResult Create(const std::string& path);
-    static DemuxerResult Create(const DemuxerConfig& config);
-
-    // Read frames
-    ReadFrameResult ReadFrame();
 
     // Getters
-    GetStreamResult GetStreams();
+    ReadFrameResult ReadFrame();
+    std::vector<AVStream *> GetStreamPointers();
 
 
 private:
     AvError m_Initialize();
 
-    DemuxerConfig m_config;
+    std::string m_path;
     AVFormatContext* m_format_ctx = nullptr;
-    AVDictionary *m_opts = nullptr;
     AVPacket *m_packet = nullptr;
 };
 

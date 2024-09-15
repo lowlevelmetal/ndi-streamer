@@ -22,7 +22,7 @@ TEST(NdiSourceTest, CreateNdiSourceSimple) {
 TEST(NdiSourceTest, SendNdiVideoFrame) {
     // Create demuxer
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     // Create decoder
     auto codecpar = streams[0]->codecpar;
@@ -73,7 +73,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
 TEST(NdiSourceTest, SendNdiAudioFrame) {
     // Create demuxer
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     // Create decoder
     auto codecpar = streams[1]->codecpar;
