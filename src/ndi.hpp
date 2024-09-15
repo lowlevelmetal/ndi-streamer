@@ -14,16 +14,26 @@
 // NDI SDK
 #include <Processing.NDI.Lib.h>
 
-// This class is only used to handle initializing and deinitializing the NDI sdk
 namespace AV::Utils {
 
-    class Ndi {
-        public:
-            Ndi();
-            ~Ndi();
+/**
+ * @brief This class just makes sure that the NDI library is initialized and deinitialized properly.
+ * Attach this to anything that uses the NDI SDK.
+ */
+class Ndi {
+public:
+    /**
+     * @brief Construct a new Ndi object
+     */
+    Ndi();
 
-        private:
-            static int m_open_instances;
-    };
+    /**
+     * @brief Destroy the Ndi object
+     */
+    ~Ndi();
+
+private:
+    static int m_open_instances;
+};
 
 } // namespace AV::Utils

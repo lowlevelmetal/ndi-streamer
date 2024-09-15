@@ -8,7 +8,7 @@
 #include "mtavserver.hpp"
 #include "macro.hpp"
 
-#define MAX_QUEUE 100
+#define MAX_QUEUE 50
 
 namespace AV::Utils {
 
@@ -212,13 +212,15 @@ void MtAvServer::m_VideoThread() {
 			}
 
 			// Copy packet
-			auto packet = m_video_packets.front();
+			auto packet_ref = m_video_packets.front();
 
-			if (av_packet_ref(packet, m_video_packets.front()) < 0) {
+			if (av_packet_ref(packet, packet_ref) < 0) {
 				DEBUG("Failed to copy packet");
 				av_packet_free(&packet);
 				break;
 			}
+
+			av_packet_free(&packet_ref);
 
 			m_video_packets.pop_front();
 
@@ -257,8 +259,9 @@ void MtAvServer::m_VideoThread() {
 		}
 
 		// Send
+		auto framerate = m_video_decoder->GetFrameRate();
 		while(1) {
-			auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder_config.dst_pix_fmt, m_video_time_base, m_video_decoder->GetFrameRate());
+			auto send_err = m_ndi_source->LoadVideoFrame(encoded_frame, m_pixel_encoder_config.dst_pix_fmt, m_video_time_base, framerate);
 			if (send_err.code() != (int)AvError::NOERROR) {
 				if (send_err.code() == (int)AvError::BUFFERFULL) {
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -304,13 +307,15 @@ void MtAvServer::m_AudioThread() {
 			}
 
 			// Copy packet
-			auto packet = m_audio_packets.front();
+			auto packet_ref = m_audio_packets.front();
 
-			if (av_packet_ref(packet, m_audio_packets.front()) < 0) {
+			if (av_packet_ref(packet, packet_ref) < 0) {
 				DEBUG("Failed to copy packet");
 				av_packet_free(&packet);
 				break;
 			}
+			
+			av_packet_free(&packet_ref);
 
 			m_audio_packets.pop_front();
 
@@ -380,7 +385,7 @@ AvError MtAvServer::m_Initialize() {
 	m_demuxer = std::move(demuxer);
 
 	// Locate streams
-	auto streams = m_demuxer->GetStreams();
+	auto streams = m_demuxer->GetStreamPointers();
 	AVCodecParameters *video_codec_params = nullptr;
 	AVCodecParameters *audio_codec_params = nullptr;
 	uint video_count = 0, audio_count = 0;

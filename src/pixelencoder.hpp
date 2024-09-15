@@ -7,17 +7,18 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
+#include "averror.hpp"
 
 extern "C" {
-    #include <libswscale/swscale.h>
+#include <libswscale/swscale.h>
 }
 
-#include "averror.hpp"
+#include <memory>
+#include <string>
 
 namespace AV::Utils {
 
+// Forward declarations and type definitions
 class PixelEncoder;
 using PixelEncoderResult = std::pair<std::unique_ptr<PixelEncoder>, const AvException>;
 using PixelEncoderOutput = std::pair<AVFrame *, const AvException>;
@@ -39,23 +40,42 @@ private:
     PixelEncoder(const pixelencoderconfig &config);
 
 public:
+    /**
+     * @brief Destroy the PixelEncoder object
+     */
     ~PixelEncoder();
 
     // Factory methods
+    /**
+     * @brief Create a new PixelEncoder object
+     *
+     * @param config The configuration for the PixelEncoder object
+     * @return PixelEncoderResult The PixelEncoder object
+     */
     static PixelEncoderResult Create(const pixelencoderconfig &config);
 
-    // Encode frames
+    // Getters
+    /**
+     * @brief Encode a frame
+     *
+     * @param frame The frame to encode
+     * @return PixelEncoderOutput The encoded frame
+     */
     PixelEncoderOutput Encode(AVFrame *frame);
-
-    // Get configured pixel format
-    AVPixelFormat GetPixelFormat();
 
 private:
     AvError m_Initialize();
 
+    // Store the configuration
     pixelencoderconfig m_config;
+
+    // Store the sws context for scaling frames
     SwsContext *m_sws_ctx = nullptr;
+
+    // Store the destination frame
     AVFrame *m_dst_frame = nullptr;
+
+    // Store the destination frame buffer;
     uint8_t *m_dst_frame_buffer = nullptr;
 };
 

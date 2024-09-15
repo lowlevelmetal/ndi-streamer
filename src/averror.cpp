@@ -18,8 +18,16 @@ namespace AV::Utils {
  */
 AvException::AvException(AvError errcode) : m_errcode(errcode) {}
 
+/**
+ * @brief Construct a new AvException:: AvException object
+ */
 AvException::AvException() : m_errcode(AvError::NOERROR) {}
 
+/**
+ * @brief Get the error message
+ *
+ * @return const char*
+ */
 const char *AvException::what() const noexcept {
     switch (m_errcode) {
     case AvError::NOERROR:
@@ -89,6 +97,11 @@ const char *AvException::what() const noexcept {
     }
 }
 
+/**
+ * @brief Get the error code
+ *
+ * @return const int
+ */
 const int AvException::code() const noexcept {
     return static_cast<int>(m_errcode);
 }

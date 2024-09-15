@@ -12,10 +12,13 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
-#define MAX_FRAMES_IN_BUFFER 100
+#define MAX_FRAMES_IN_BUFFER 50
 
 namespace AV::Utils {
 
+/**
+ * @brief Construct a new AsyncNdiSource object
+ */
 AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_source_name(ndi_source_name) {
     auto err = m_Initialize();
     if (err != AvError::NOERROR) {
@@ -23,6 +26,9 @@ AsyncNdiSource::AsyncNdiSource(const std::string &ndi_source_name) : m_ndi_sourc
     }
 }
 
+/**
+ * @brief Destroy the AsyncNdiSource object
+ */
 AsyncNdiSource::~AsyncNdiSource() {
     DEBUG("AsyncNdiSource destructor called");
 
@@ -269,7 +275,7 @@ void AsyncNdiSource::m_VideoThread() {
             m_video_frames.pop_front();
         }
 
-        DEBUG("Popped video frame from queue"
+        MULTILINE_DEBUG("Popped video frame from queue"
               "Sample rate: %d\n"
               "Channels: %d\n"
               "Samples: %d\n"
@@ -373,7 +379,7 @@ void AsyncNdiSource::m_AudioThread() {
             m_audio_frames.pop_front();
         }
 
-        DEBUG("Popped audio frame from queue"
+        MULTILINE_DEBUG("Popped audio frame from queue"
               "Sample rate: %d\n"
               "Channels: %d\n"
               "Samples: %d\n"

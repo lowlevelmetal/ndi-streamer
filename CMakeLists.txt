@@ -36,8 +36,7 @@ set(SOURCES
     src/ndisource.cpp
     src/ndiavserver.cpp
     src/asyncndisource.cpp
-    src/mtavserver.cpp
-    src/conditionalsleep.cpp)
+    src/mtavserver.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

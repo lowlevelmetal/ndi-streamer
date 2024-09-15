@@ -18,7 +18,7 @@ TEST(AsyncNdiSource, Create) {
 TEST(AsyncNdiSource, LoadVideoFrame) {
     // Create demuxer
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     // Create decoder
     auto codecpar = streams[0]->codecpar;
@@ -65,7 +65,7 @@ TEST(AsyncNdiSource, LoadVideoFrame) {
             
             AV::Utils::AvException load_err;
             while(1) {
-                load_err = ndisource->LoadVideoFrame(encoded_frame, encoder->GetPixelFormat(), streams[0]->time_base, decoder->GetFrameRate());
+                load_err = ndisource->LoadVideoFrame(encoded_frame, encoder_config.dst_pix_fmt, streams[0]->time_base, decoder->GetFrameRate());
                 if (load_err.code() != 0) {
                     if(load_err.code() == (int)AV::Utils::AvError::BUFFERFULL) {
                         continue;

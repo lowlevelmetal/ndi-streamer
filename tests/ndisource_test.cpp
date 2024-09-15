@@ -22,7 +22,7 @@ TEST(NdiSourceTest, CreateNdiSourceSimple) {
 TEST(NdiSourceTest, SendNdiVideoFrame) {
     // Create demuxer
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     // Create decoder
     auto codecpar = streams[0]->codecpar;
@@ -64,7 +64,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
             }
             EXPECT_EQ(frame_err.code(), 0);
             auto [encoded_frame, encoded_frame_err] = encoder->Encode(frame);
-            auto send_err = ndisource->SendVideoFrame(encoded_frame, encoder->GetPixelFormat(), streams[0]->time_base, decoder->GetFrameRate());
+            auto send_err = ndisource->SendVideoFrame(encoded_frame, encoder_config.dst_pix_fmt, streams[0]->time_base, decoder->GetFrameRate());
             EXPECT_EQ(send_err.code(), 0);
         }
     }
@@ -73,7 +73,7 @@ TEST(NdiSourceTest, SendNdiVideoFrame) {
 TEST(NdiSourceTest, SendNdiAudioFrame) {
     // Create demuxer
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     // Create decoder
     auto codecpar = streams[1]->codecpar;

@@ -40,7 +40,6 @@ public:
 
     // Process and send next frame
     AvException ProcessNextFrame();
-    double GetTargetFramerate();
     
 
 private:

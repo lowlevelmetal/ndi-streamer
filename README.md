@@ -38,7 +38,7 @@ This will generate the executable in your build directory
 ## Usage
 
 ```
-./ndi-streamer
+./ndistreamer
     -i /path/to/your/media.mp4
     -s "NDI Source Name"
 ```

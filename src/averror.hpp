@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <exception>
 #include <atomic>
+#include <exception>
 
 namespace AV::Utils {
 
@@ -54,16 +54,34 @@ enum class AvError {
  */
 class AvException : public std::exception {
 public:
+    /**
+     * @brief Construct a new AvException:: AvException object
+     *
+     * @param errcode error code
+     */
     AvException(AvError errcode);
+
+    /**
+     * @brief Construct a new AvException:: AvException object
+     */
     AvException();
 
+    /**
+     * @brief Get the error message
+     *
+     * @return const char*
+     */
     const char *what() const noexcept override;
+
+    /**
+     * @brief Get the error code
+     *
+     * @return const int
+     */
     const int code() const noexcept;
 
 private:
     AvError m_errcode;
 };
-
-using AtomicAvException = std::atomic<AvError>;
 
 } // namespace AV::Utils

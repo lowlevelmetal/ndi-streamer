@@ -26,7 +26,7 @@ TEST(PixelEncoderTest, CreatePixelEncoderSimple) {
 
 TEST(PixelEncoderTest, EncodeMultipleFrames) {
     auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create("testcontent/rickroll.mp4");
-    auto streams = demuxer->GetStreams();
+    auto streams = demuxer->GetStreamPointers();
 
     AVCodecParameters *codecpar = streams[0]->codecpar;
 
