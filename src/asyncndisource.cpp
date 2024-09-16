@@ -327,9 +327,11 @@ void AsyncNdiSource::m_VideoThread() {
             auto now = std::chrono::high_resolution_clock::now();
             double pts_in_seconds = m_video_frame.frame->pts * av_q2d(m_video_frame.time_base);
             double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
+            if (time_to_sleep >= 0) {
                 DEBUG("Sleeping for %f seconds", time_to_sleep);
                 std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
+            } else {
+                ERROR("VIDEO SENDER CAN'T KEEP UP! %f seconds behind", time_to_sleep);
             }
         }
 
@@ -422,9 +424,11 @@ void AsyncNdiSource::m_AudioThread() {
             auto now = std::chrono::high_resolution_clock::now();
             double pts_in_seconds = m_audio_frame.frame->pts * av_q2d(m_audio_frame.time_base);
             double time_to_sleep = pts_in_seconds - std::chrono::duration_cast<std::chrono::duration<double>>(now - m_video_start_time).count();
-            if (time_to_sleep > 0) {
+            if (time_to_sleep >= 0) {
                 DEBUG("Sleeping for %f seconds", time_to_sleep);
                 std::this_thread::sleep_for(std::chrono::duration<double>(time_to_sleep));
+            } else {
+                ERROR("AUDIO SENDER CAN'T KEEP UP! %f seconds behind", time_to_sleep);
             }
         }
 
