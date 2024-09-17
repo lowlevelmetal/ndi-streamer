@@ -14,12 +14,20 @@
 
 namespace AV::Utils {
 
+/**
+ * @brief Construct a new FrameTimer object
+ * 
+ * @param capacity The capacity of the FrameTimer
+ */
 FrameTimer::FrameTimer(const int capacity) {
     FUNCTION_CALL_DEBUG();
 
     _capacity = capacity;
 }
 
+/**
+ * @brief Destroy the FrameTimer object
+ */
 FrameTimer::~FrameTimer() {
     FUNCTION_CALL_DEBUG();
 
@@ -29,7 +37,13 @@ FrameTimer::~FrameTimer() {
     }
 }
 
-
+/**
+ * @brief Add a frame to the FrameTimer
+ * Keep in mind that a copy(referenced) of the frame is made.
+ * 
+ * @param frame The frame to add
+ * @return AvException
+ */
 AvException FrameTimer::AddFrame(AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
 
@@ -60,6 +74,12 @@ AvException FrameTimer::AddFrame(AVFrame *frame) {
     return AvError::NOERROR;
 }
 
+/**
+ * @brief Get the next frame in the sequence
+ * This function will give you a copy of the frame and remove it from the FrameTimer
+ * 
+ * @return AVFrame* The next frame in the sequence
+ */
 AVFrame *FrameTimer::GetFrame() {
     FUNCTION_CALL_DEBUG();
 
@@ -74,12 +94,20 @@ AVFrame *FrameTimer::GetFrame() {
     return frame;
 }
 
+/**
+ * @brief Check if the FrameTimer is full
+ * @return bool True if full, false otherwise
+ */
 bool FrameTimer::IsFull() {
     FUNCTION_CALL_DEBUG();
 
     return _frames.size() >= _capacity;
 }
 
+/**
+ * @brief Check if the FrameTimer is empty
+ * @return bool True if empty, false otherwise
+ */
 bool FrameTimer::IsEmpty() {
     FUNCTION_CALL_DEBUG();
 

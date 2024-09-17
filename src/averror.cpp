@@ -100,6 +100,14 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Invalid sample format";
     case AvError::DEMUXEREOF:
         return DEMUXSTR " Demuxer reached end of file";
+    case AvError::HWDEVICECTXALLOC:
+        return DEMUXSTR " Error allocating hardware device context";
+    case AvError::HWDEVICEGETBUF:
+        return DEMUXSTR " Error getting hardware buffer";
+    case AvError::FILTERGRAPHALLOC:
+        return DEMUXSTR " Error allocating filter graph";
+    case AvError::INOUTALLOC:
+        return DEMUXSTR " Error allocating in/out";
     default:
         return DEMUXSTR " Unknown error";
     }

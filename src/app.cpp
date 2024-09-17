@@ -12,8 +12,11 @@
 #include "macro.hpp"
 #include "ndisource.hpp"
 #include "pixelencoder.hpp"
-#include <libavcodec/codec_par.h>
-#include <libavutil/pixfmt.h>
+
+extern "C" {
+	#include <libavcodec/codec_par.h>
+	#include <libavutil/pixfmt.h>
+}
 
 AV::Utils::AvException App::Run() {
 	bool packets_exhausted = false;
@@ -78,14 +81,8 @@ AV::Utils::AvException App::Run() {
 				break;
 			}
 
-			auto [encoded_frame, encoded_frame_err] = _pixel_encoder->Encode(decoded_frame);
-			if(encoded_frame_err.code()) {
-				ERROR("Failure in encoder: %s", encoded_frame_err.what());
-				break;
-			}
-
 			// Add packet to time controller
-			auto err = _frame_timer.AddFrame(encoded_frame);
+			auto err = _frame_timer.AddFrame(decoded_frame);
 			if (err.code()) {
 				ERROR("Failed to add frame to timer: %s", err.what());
 				break;
@@ -177,10 +174,12 @@ AV::Utils::AvError App::_Initialize() {
 	// Get codecs and stream ids
 	AVCodecParameters *video_cparam = nullptr, *audio_cparam = nullptr;
 	int vcount = 0, acount = 0;
+	AVRational video_time_base{};
 	for (auto stream : _demuxer->GetStreamPointers()) {
 		if(stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
 			video_cparam = stream->codecpar;
 			_video_stream_index = stream->index;
+			video_time_base = stream->time_base;
 			vcount++;
 		} else if(stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
 			audio_cparam = stream->codecpar;
@@ -195,7 +194,7 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	// Create the video decoder
-	auto [video_decoder, video_decoder_err] = AV::Utils::Decoder::Create(video_cparam);
+	auto [video_decoder, video_decoder_err] = AV::Utils::NVENCFilterDecoder::Create(video_cparam, video_time_base);
 	if(video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
 		DEBUG("Video decoder error: %s", video_decoder_err.what());
 		return (AV::Utils::AvError)video_decoder_err.code();
@@ -211,23 +210,6 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	_audio_decoder = std::move(audio_decoder);
-
-	// Create the pixel encoder
-	AV::Utils::PixelEncoderConfig pixel_encoder_config{};
-	pixel_encoder_config.dst_width = video_cparam->width;
-	pixel_encoder_config.dst_height = video_cparam->height;
-	pixel_encoder_config.dst_pix_fmt = AV_PIX_FMT_UYVY422;
-	pixel_encoder_config.src_width = video_cparam->width;
-	pixel_encoder_config.src_height = video_cparam->height;
-	pixel_encoder_config.src_pix_fmt = (AVPixelFormat)video_cparam->format;
-
-	auto [pixel_encoder, pixel_encoder_err] = AV::Utils::PixelEncoder::Create(pixel_encoder_config);
-	if(pixel_encoder_err.code()) {
-		DEBUG("Pixel encoder error: %s", pixel_encoder_err.what());
-		return (AV::Utils::AvError)pixel_encoder_err.code();
-	}
-
-	_pixel_encoder = std::move(pixel_encoder);
 
 	// Create the audio resampler
 	AV::Utils::AudioResamplerConfig audio_resampler_config{};

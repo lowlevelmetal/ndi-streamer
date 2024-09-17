@@ -68,6 +68,10 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    PRINT("NDI Streamer");
+    PRINT("NDI Source: %s", cmdlineargs.ndisource.c_str());
+    PRINT("Video File: %s", cmdlineargs.videofile.c_str());
+
     // Create the application
     auto [app, app_error] = App::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     if (app_error.code() != (int)AV::Utils::AvError::NOERROR) {
@@ -79,6 +83,8 @@ int main(int argc, char **argv) {
     std::cout << "Press any key to continue..." << std::endl;
     std::cin.get();
 #endif
+
+    PRINT("Running application...");
 
     // Run the application
     auto run_error = app->Run();

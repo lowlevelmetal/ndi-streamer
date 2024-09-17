@@ -8,6 +8,8 @@
 #include "decoder.hpp"
 #include "macro.hpp"
 
+#include <chrono>
+
 namespace AV::Utils {
 
 /**
@@ -48,6 +50,10 @@ AvException Decoder::FillDecoder(AVPacket *packet) {
  */
 DecoderOutput Decoder::Decode() {
     FUNCTION_CALL_DEBUG();
+#ifdef _DEBUG
+    // Profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
 
     // Recieve frame from decoder
     int ret = avcodec_receive_frame(m_codec, m_last_frame);
@@ -58,6 +64,12 @@ DecoderOutput Decoder::Decode() {
         PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::RECIEVEFRAME)};
     }
+
+#ifdef _DEBUG
+    // Profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Decode time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return {m_last_frame, AvException(AvError::NOERROR)};
 }

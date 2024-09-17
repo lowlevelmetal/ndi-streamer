@@ -12,13 +12,16 @@
 #include "averror.hpp"
 #include "demuxer.hpp"
 #include "ndisource.hpp"
-#include "decoder.hpp"
+#include "nvencfilterdecoder.hpp"
 #include "pixelencoder.hpp"
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
 
+extern "C" {
+	#include <libavcodec/codec_par.h>
+}
+
 // Standard C++ includes
-#include <libavcodec/codec_par.h>
 #include <string>
 #include <memory>
 
@@ -42,9 +45,8 @@ private:
 	std::string _ndi_source_name;
 	std::string _video_file_path;
 	std::shared_ptr<AV::Utils::Demuxer> _demuxer;
-	std::shared_ptr<AV::Utils::Decoder> _video_decoder;
+	std::shared_ptr<AV::Utils::NVENCFilterDecoder> _video_decoder;
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
-	std::shared_ptr<AV::Utils::PixelEncoder> _pixel_encoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
 	std::shared_ptr<AV::Utils::NDISource> _ndi_source;
 	

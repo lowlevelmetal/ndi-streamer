@@ -36,7 +36,8 @@ set(SOURCES
     src/frametimer.cpp
     src/frame.cpp
     src/ndisource.cpp
-    src/app.cpp)
+    src/app.cpp
+    src/nvencfilterdecoder.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

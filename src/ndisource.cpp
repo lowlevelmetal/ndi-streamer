@@ -78,6 +78,12 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     case AV_PIX_FMT_UYVY422:
         video_frame.FourCC = NDIlib_FourCC_type_UYVY;
         break;
+    case AV_PIX_FMT_NV12:
+        video_frame.FourCC = NDIlib_FourCC_video_type_NV12;
+        break;
+    case AV_PIX_FMT_YUV420P:
+        video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+        break;
     default:
         return AvError::NDIINVALIDPIXFMT;
     }
