@@ -71,8 +71,6 @@ AvError NDISource::_Initialize() {
 
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
-    
-    bool manual_free = false;
 
     // Build NDI packet from frame
     NDIlib_video_frame_v2_t video_frame;
@@ -101,9 +99,8 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     case AV_PIX_FMT_NV12:
         DEBUG("Sending NV12 frame");
         video_frame.FourCC = NDIlib_FourCC_type_NV12;
-        video_frame.p_data = CreateNV12Buffer(frame);
+        video_frame.p_data = frame->data[0];
         video_frame.line_stride_in_bytes = frame->width;
-        manual_free = true;
         break;
     default:
         return AvError::NDIINVALIDPIXFMT;
@@ -117,10 +114,6 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
 
     // Send the frame
     NDIlib_send_send_video_v2(_ndi_send_instance, &video_frame);
-
-    if(manual_free) {
-        delete video_frame.p_data;
-    }
 
     return AvError::NOERROR;
 }

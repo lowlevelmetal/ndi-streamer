@@ -22,11 +22,4 @@ namespace AV::Utils {
  */
 AVFrame *CopyFrame(AVFrame *frame);
 
-/**
- * @brief Create an NV12 buffer from an AVFrame
- * @param frame The frame to create the buffer from
- * @return uint8_t* The NV12 buffer
- */
-uint8_t *CreateNV12Buffer(const AVFrame *frame);
-
 } // namespace AV::Utils
