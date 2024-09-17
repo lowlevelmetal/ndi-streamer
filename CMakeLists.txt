@@ -33,8 +33,6 @@ set(SOURCES
     src/pixelencoder.cpp
     src/audioresampler.cpp
     src/ndi.cpp
-    src/asyncndisource.cpp
-    src/mtavserver.cpp
     src/frametimer.cpp
     src/frame.cpp
     src/ndisource.cpp

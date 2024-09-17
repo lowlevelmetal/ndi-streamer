@@ -12,6 +12,7 @@
 namespace AV::Utils {
 
 NDISourceResult NDISource::Create(const std::string &source_name, const AVRational &frame_rate) {
+    FUNCTION_CALL_DEBUG();
     AvException err;
 
     try {
@@ -25,6 +26,8 @@ NDISourceResult NDISource::Create(const std::string &source_name, const AVRation
 }
 
 AvException NDISource::SendFrame(const AVFrame *frame) {
+    FUNCTION_CALL_DEBUG();
+
     if(frame->width != 0 && frame->height != 0) {
         return _SendVideoFrame(frame);
     }
@@ -33,6 +36,8 @@ AvException NDISource::SendFrame(const AVFrame *frame) {
 }
 
 NDISource::NDISource(const std::string &source_name, const AVRational &frame_rate) : _source_name(source_name), _frame_rate(frame_rate) {
+    FUNCTION_CALL_DEBUG();
+
     AvError err = _Initialize();
     if(err != AvError::NOERROR) {
         throw AvException(err);
@@ -40,12 +45,16 @@ NDISource::NDISource(const std::string &source_name, const AVRational &frame_rat
 }
 
 NDISource::~NDISource() {
+    FUNCTION_CALL_DEBUG();
+
     if(_ndi_send_instance != nullptr) {
         NDIlib_send_destroy(_ndi_send_instance);
     }
 }
 
 AvError NDISource::_Initialize() {
+    FUNCTION_CALL_DEBUG();
+
     // Create NDI send instance
     NDIlib_send_create_t send_create_desc;
     send_create_desc.p_ndi_name = _source_name.c_str();

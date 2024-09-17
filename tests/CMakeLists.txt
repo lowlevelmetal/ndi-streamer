@@ -19,15 +19,11 @@ add_executable(demuxer_test demuxer_test.cpp ../src/demuxer.cpp ../src/averror.c
 add_executable(decoder_test decoder_test.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(pixelencoder_test pixelencoder_test.cpp ../src/pixelencoder.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(audioresampler_test audioresampler_test.cpp ../src/audioresampler.cpp ../src/averror.cpp ../src/decoder ../src/demuxer.cpp)
-add_executable(asyncndisource_test asyncndisource_test.cpp ../src/asyncndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
-add_executable(mtavserver_test mtavserver_test.cpp ../src/mtavserver.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp ../src/asyncndisource.cpp)
 
 add_dependencies(demuxer_test download_video)
 add_dependencies(decoder_test download_video)
 add_dependencies(pixelencoder_test download_video)
 add_dependencies(audioresampler_test download_video)
-add_dependencies(asyncndisource_test download_video)
-add_dependencies(mtavserver_test download_video)
 
 include_directories(${NDI_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIRS} ${GTEST_INCLUDE_DIRS} ../src)
 
@@ -35,8 +31,6 @@ target_link_libraries(demuxer_test PRIVATE GTest::gtest GTest::gtest_main ${FFMP
 target_link_libraries(decoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(pixelencoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(audioresampler_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
-target_link_libraries(asyncndisource_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES} ${NDI_LIB})
-target_link_libraries(mtavserver_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES} ${NDI_LIB})
 
 # Set up demuxer tests
 add_test(NAME demuxer_test COMMAND demuxer_test)
@@ -57,10 +51,4 @@ add_test(NAME valgrind_pixelencoder_test
 add_test(NAME audioresampler_test COMMAND audioresampler_test)
 add_test(NAME valgrind_audioresampler_test
          COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:audioresampler_test>)
-
-# Set up asyncndisource tests
-add_test(NAME asyncndisource_test COMMAND asyncndisource_test)
-
-# Set up mtavserver tests
-add_test(NAME mtavserver_test COMMAND mtavserver_test)
 

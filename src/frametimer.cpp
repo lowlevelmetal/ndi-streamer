@@ -8,16 +8,21 @@
 
 #include "frametimer.hpp"
 #include "frame.hpp"
+#include "macro.hpp"
 
 #include <algorithm>
 
 namespace AV::Utils {
 
 FrameTimer::FrameTimer(const int capacity) {
+    FUNCTION_CALL_DEBUG();
+
     _capacity = capacity;
 }
 
 FrameTimer::~FrameTimer() {
+    FUNCTION_CALL_DEBUG();
+
     // Free all frames
     for (auto frame : _frames) {
         av_frame_free(&frame);
@@ -26,12 +31,14 @@ FrameTimer::~FrameTimer() {
 
 
 AvException FrameTimer::AddFrame(AVFrame *frame) {
+    FUNCTION_CALL_DEBUG();
+
     if(_frames.size() >= _capacity) {
         return AvError::BUFFERFULL;
     }
 
     // Check if frame has valid time_base and pts
-    if (frame->pts == AV_NOPTS_VALUE) {
+    if (frame->pts == AV_NOPTS_VALUE || frame->time_base.den == 0) {
         return AvError::INVALIDFRAME;
     }
 
@@ -54,6 +61,8 @@ AvException FrameTimer::AddFrame(AVFrame *frame) {
 }
 
 AVFrame *FrameTimer::GetFrame() {
+    FUNCTION_CALL_DEBUG();
+
     if (_frames.empty()) {
         return nullptr;
     }
@@ -66,10 +75,14 @@ AVFrame *FrameTimer::GetFrame() {
 }
 
 bool FrameTimer::IsFull() {
+    FUNCTION_CALL_DEBUG();
+
     return _frames.size() >= _capacity;
 }
 
 bool FrameTimer::IsEmpty() {
+    FUNCTION_CALL_DEBUG();
+
     return _frames.empty();
 }
 
@@ -78,6 +91,8 @@ bool FrameTimer::IsEmpty() {
  * pts, time_base, and frame_rate.
  */
 AvError FrameTimer::_ReorderFrames() {
+    FUNCTION_CALL_DEBUG();
+
     // Sort the frames based on pts order
     std::sort(_frames.begin(), _frames.end(), [](AVFrame *a, AVFrame *b) {
         // Force a universal time unit of microseconds

@@ -85,7 +85,12 @@ AV::Utils::AvException App::Run() {
 			}
 
 			// Add packet to time controller
-			_frame_timer.AddFrame(encoded_frame);
+			auto err = _frame_timer.AddFrame(encoded_frame);
+			if (err.code()) {
+				ERROR("Failed to add frame to timer: %s", err.what());
+				break;
+			}
+
 		} else if(current_packet->stream_index == _audio_stream_index) {
 			if(!packet_in_decoder) {
 				auto err = _audio_decoder->FillDecoder(current_packet);
@@ -115,7 +120,11 @@ AV::Utils::AvException App::Run() {
 				break;
 			}
 
-			_frame_timer.AddFrame(resampled_frame);
+			auto err = _frame_timer.AddFrame(resampled_frame);
+			if (err.code()) {
+				ERROR("Failed to add frame to timer: %s", err.what());
+				break;
+			}
 		}
 
 		if(_frame_timer.IsFull()) {

@@ -7,6 +7,7 @@
  */
 
 #include "frame.hpp"
+#include "macro.hpp"
 
 namespace AV::Utils {
 
@@ -16,6 +17,8 @@ namespace AV::Utils {
  * @return AVFrame* The copied frame
  */
 AVFrame *CopyFrame(AVFrame *frame) {
+    FUNCTION_CALL_DEBUG();
+
     AVFrame *new_frame = av_frame_alloc();
     if (!new_frame) {
         return nullptr;

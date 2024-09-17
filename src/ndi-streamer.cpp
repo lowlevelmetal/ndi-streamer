@@ -10,14 +10,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <chrono>
 
 // POSIX includes
 #include <unistd.h>
 
 // Local includes
 #include "macro.hpp"
-#include "mtavserver.hpp"
 #include "app.hpp"
 
 typedef struct CommandLineArguments {
