@@ -33,10 +33,11 @@ set(SOURCES
     src/pixelencoder.cpp
     src/audioresampler.cpp
     src/ndi.cpp
-    src/ndisource.cpp
-    src/ndiavserver.cpp
     src/asyncndisource.cpp
-    src/mtavserver.cpp)
+    src/mtavserver.cpp
+    src/frametimer.cpp
+    src/frame.cpp
+    src/ndisource.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

@@ -31,6 +31,10 @@ FUNCTION_CALL_DEBUG();
 
     m_dst_frame->pts = frame->pts;
     m_dst_frame->pkt_dts = frame->pkt_dts;
+    m_dst_frame->pict_type = frame->pict_type;
+    m_dst_frame->quality = frame->quality;
+    m_dst_frame->opaque = frame->opaque;
+    m_dst_frame->best_effort_timestamp = frame->best_effort_timestamp;
 
     // Scale the frame into the destination frame
     int ret = sws_scale(m_sws_ctx, frame->data, frame->linesize, 0, m_config.src_height, m_dst_frame->data, m_dst_frame->linesize);
@@ -38,6 +42,16 @@ FUNCTION_CALL_DEBUG();
         PRINT_FFMPEG_ERR(ret);
         return {nullptr, AvException(AvError::SWSSCALE)};
     }
+
+    // Print new frame metadata
+    DEBUG("Pixel Encoded Frame Metadata\n"
+            "  pts: %ld\n"
+            "  pkt_dts: %ld\n"
+            "  pict_type: %d\n"
+            "  quality: %d\n"
+            "  opaque: %p\n"
+            "  best_effort_timestamp: %ld",
+            m_dst_frame->pts, m_dst_frame->pkt_dts, m_dst_frame->pict_type, m_dst_frame->quality, m_dst_frame->opaque, m_dst_frame->best_effort_timestamp);
 
 #ifdef _DEBUG
     // Profile function

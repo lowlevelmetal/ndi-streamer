@@ -92,6 +92,10 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Buffer is full";
     case AvError::PACKETREF:
         return DEMUXSTR " Error referencing packet";
+    case AvError::BUFFEREMPTY:
+        return DEMUXSTR " Buffer is empty";
+    case AvError::INVALIDFRAME:
+        return DEMUXSTR " Invalid frame";
     default:
         return DEMUXSTR " Unknown error";
     }

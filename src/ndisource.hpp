@@ -1,47 +1,55 @@
 /**
  * @file ndisource.hpp
- * @brief This file includes utilities for working with NDI.
- * @date 2024-09-06
+ * @brief This file includes utilities for working with NDI sources.
+ * @date 2024-09-16
  * @author Matthew Todd Geiger
+ * @version 1.0
  */
 
 #pragma once
 
-#include <memory>
-
+// Local includes
 #include "ndi.hpp"
 #include "averror.hpp"
-#include "decoder.hpp"
 
+// NDI SDK
+#include <Processing.NDI.Lib.h>
+
+// FFMPEG includes
 extern "C" {
 #include <libavutil/frame.h>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
 }
+
+// Standard C++ includes
+#include <string>
+#include <memory>
 
 namespace AV::Utils {
 
-class NdiSource;
-using NdiSourceResult = std::pair<std::unique_ptr<NdiSource>, const AvException>;
+// Forward declarations and type definitions
+class NDISource;
+using NDISourceResult = std::pair<std::shared_ptr<NDISource>, AvException>;
 
-class NdiSource : public Ndi {
+class NDISource : public Ndi {
 private:
-    NdiSource(const std::string &ndi_name);
+    NDISource(const std::string &source_name, const AVRational &frame_rate);
+    AvError _Initialize();
+    AvError _SendVideoFrame(const AVFrame *frame);
+    AvError _SendAudioFrame(const AVFrame *frame);
 
 public:
-    ~NdiSource();
+    ~NDISource();
 
-    static NdiSourceResult Create(const std::string &ndi_name);
+    // Factory
+    static NDISourceResult Create(const std::string &source_name, const AVRational &frame_rate);
 
-    AvException SendVideoFrame(AVFrame *frame, AVPixelFormat format, const AVRational &time_base, const CodecFrameRate &fps);
-    AvException SendAudioFrameFLTPlanar(AVFrame *frame, const AVRational &time_base);
-    AvException SendAudioFrameS16(AVFrame *frame, const AVRational &time_base);
+    AvException SendFrame(const AVFrame *frame);
 
 private:
-    AvError m_Initialize();
+    std::string _source_name;
+    NDIlib_send_instance_t _ndi_send_instance;
+    AVRational _frame_rate;
 
-    NDIlib_send_instance_t m_send_instance = nullptr;
-    std::string m_name;
 };
 
 } // namespace AV::Utils

@@ -19,15 +19,13 @@ add_executable(demuxer_test demuxer_test.cpp ../src/demuxer.cpp ../src/averror.c
 add_executable(decoder_test decoder_test.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(pixelencoder_test pixelencoder_test.cpp ../src/pixelencoder.cpp ../src/decoder.cpp ../src/averror.cpp ../src/demuxer.cpp)
 add_executable(audioresampler_test audioresampler_test.cpp ../src/audioresampler.cpp ../src/averror.cpp ../src/decoder ../src/demuxer.cpp)
-add_executable(ndisource_test ndisource_test.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
-add_executable(asyncndisource_test asyncndisource_test.cpp ../src/asyncndisource.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
-add_executable(mtavserver_test mtavserver_test.cpp ../src/mtavserver.cpp ../src/ndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp ../src/asyncndisource.cpp ../src/ndiavserver.cpp)
+add_executable(asyncndisource_test asyncndisource_test.cpp ../src/asyncndisource.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp)
+add_executable(mtavserver_test mtavserver_test.cpp ../src/mtavserver.cpp ../src/ndi.cpp ../src/averror.cpp ../src/demuxer.cpp ../src/decoder.cpp ../src/pixelencoder.cpp ../src/audioresampler.cpp ../src/asyncndisource.cpp)
 
 add_dependencies(demuxer_test download_video)
 add_dependencies(decoder_test download_video)
 add_dependencies(pixelencoder_test download_video)
 add_dependencies(audioresampler_test download_video)
-add_dependencies(ndisource_test download_video)
 add_dependencies(asyncndisource_test download_video)
 add_dependencies(mtavserver_test download_video)
 
@@ -37,7 +35,6 @@ target_link_libraries(demuxer_test PRIVATE GTest::gtest GTest::gtest_main ${FFMP
 target_link_libraries(decoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(pixelencoder_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
 target_link_libraries(audioresampler_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES})
-target_link_libraries(ndisource_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES} ${NDI_LIB})
 target_link_libraries(asyncndisource_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES} ${NDI_LIB})
 target_link_libraries(mtavserver_test PRIVATE GTest::gtest GTest::gtest_main ${FFMPEG_LIBRARIES} ${NDI_LIB})
 
@@ -60,11 +57,6 @@ add_test(NAME valgrind_pixelencoder_test
 add_test(NAME audioresampler_test COMMAND audioresampler_test)
 add_test(NAME valgrind_audioresampler_test
          COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:audioresampler_test>)
-
-# Set up ndisource tests
-add_test(NAME ndisource_test COMMAND ndisource_test)
-add_test(NAME valgrind_ndisource_test
-         COMMAND valgrind --leak-check=full --error-exitcode=1 --show-reachable=no $<TARGET_FILE:ndisource_test>)
 
 # Set up asyncndisource tests
 add_test(NAME asyncndisource_test COMMAND asyncndisource_test)

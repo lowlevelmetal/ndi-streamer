@@ -18,7 +18,6 @@
 // Local includes
 #include "macro.hpp"
 #include "mtavserver.hpp"
-#include "ndiavserver.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;

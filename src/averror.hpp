@@ -46,7 +46,9 @@ enum class AvError {
     FRAMEREF,
     SAMPLECOPY,
     BUFFERFULL,
-    PACKETREF
+    PACKETREF,
+    BUFFEREMPTY,
+    INVALIDFRAME,
 };
 
 /**
