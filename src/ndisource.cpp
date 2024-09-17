@@ -72,26 +72,38 @@ AvError NDISource::_Initialize() {
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
     
+    bool manual_free = false;
+
     // Build NDI packet from frame
     NDIlib_video_frame_v2_t video_frame;
-    bool free_buffer = false;
+
+    DEBUG("Frame metadata"
+            "\n\tWidth: %d"
+            "\n\tHeight: %d"
+            "\n\tFormat: %d"
+            "\n\tLinesize 1: %d"
+            "\n\tLinesize 2: %d",
+            frame->width, frame->height, frame->format, frame->linesize[0], frame->linesize[1]);
 
     switch(frame->format) {
     case AV_PIX_FMT_UYVY422:
+        DEBUG("Sending UYVY frame");
         video_frame.FourCC = NDIlib_FourCC_type_UYVY;
         video_frame.p_data = frame->data[0];
         video_frame.line_stride_in_bytes = frame->linesize[0];
         break;
-    case AV_PIX_FMT_RGBA:
+    case AV_PIX_FMT_RGB24:
+        DEBUG("Sending RGB24 frame");
         video_frame.FourCC = NDIlib_FourCC_type_RGBA;
         video_frame.p_data = frame->data[0];
         video_frame.line_stride_in_bytes = frame->linesize[0];
         break;
     case AV_PIX_FMT_NV12:
+        DEBUG("Sending NV12 frame");
         video_frame.FourCC = NDIlib_FourCC_type_NV12;
         video_frame.p_data = CreateNV12Buffer(frame);
         video_frame.line_stride_in_bytes = frame->width;
-        free_buffer = true;
+        manual_free = true;
         break;
     default:
         return AvError::NDIINVALIDPIXFMT;
@@ -106,7 +118,7 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     // Send the frame
     NDIlib_send_send_video_v2(_ndi_send_instance, &video_frame);
 
-    if(free_buffer) {
+    if(manual_free) {
         delete video_frame.p_data;
     }
 
