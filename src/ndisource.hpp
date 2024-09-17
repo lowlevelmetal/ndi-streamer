@@ -47,7 +47,7 @@ public:
 
 private:
     std::string _source_name;
-    NDIlib_send_instance_t _ndi_send_instance;
+    NDIlib_send_instance_t _ndi_send_instance = nullptr;
     AVRational _frame_rate;
 
 };

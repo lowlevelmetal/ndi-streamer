@@ -31,7 +31,7 @@ AvException FrameTimer::AddFrame(AVFrame *frame) {
     }
 
     // Check if frame has valid time_base and pts
-    if (frame->time_base.num == 0 || frame->time_base.den == 0 || frame->pts == AV_NOPTS_VALUE) {
+    if (frame->pts == AV_NOPTS_VALUE) {
         return AvError::INVALIDFRAME;
     }
 
@@ -67,6 +67,10 @@ AVFrame *FrameTimer::GetFrame() {
 
 bool FrameTimer::IsFull() {
     return _frames.size() >= _capacity;
+}
+
+bool FrameTimer::IsEmpty() {
+    return _frames.empty();
 }
 
 /**

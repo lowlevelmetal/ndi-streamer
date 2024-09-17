@@ -63,6 +63,8 @@ public:
      */
     bool IsFull();
 
+    bool IsEmpty();
+
 private:
     AvError _ReorderFrames();
 

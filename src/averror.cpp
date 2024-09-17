@@ -96,6 +96,10 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Buffer is empty";
     case AvError::INVALIDFRAME:
         return DEMUXSTR " Invalid frame";
+    case AvError::INVALIDSMPLFMT:
+        return DEMUXSTR " Invalid sample format";
+    case AvError::DEMUXEREOF:
+        return DEMUXSTR " Demuxer reached end of file";
     default:
         return DEMUXSTR " Unknown error";
     }

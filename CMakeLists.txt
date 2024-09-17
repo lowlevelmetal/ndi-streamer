@@ -37,7 +37,8 @@ set(SOURCES
     src/mtavserver.cpp
     src/frametimer.cpp
     src/frame.cpp
-    src/ndisource.cpp)
+    src/ndisource.cpp
+    src/app.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

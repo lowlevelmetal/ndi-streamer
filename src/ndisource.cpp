@@ -7,10 +7,60 @@
  */
 
 #include "ndisource.hpp"
+#include "macro.hpp"
 
 namespace AV::Utils {
 
+NDISourceResult NDISource::Create(const std::string &source_name, const AVRational &frame_rate) {
+    AvException err;
+
+    try {
+        return {std::shared_ptr<NDISource>(new NDISource(source_name, frame_rate)), AvError::NOERROR};
+    } catch(const AvException e) {
+        err = e;
+        DEBUG("Error creating NDI source: %s", e.what());
+    }
+
+    return {nullptr, err};
+}
+
+AvException NDISource::SendFrame(const AVFrame *frame) {
+    if(frame->width != 0 && frame->height != 0) {
+        return _SendVideoFrame(frame);
+    }
+
+    return _SendAudioFrame(frame);
+}
+
+NDISource::NDISource(const std::string &source_name, const AVRational &frame_rate) : _source_name(source_name), _frame_rate(frame_rate) {
+    AvError err = _Initialize();
+    if(err != AvError::NOERROR) {
+        throw AvException(err);
+    }
+}
+
+NDISource::~NDISource() {
+    if(_ndi_send_instance != nullptr) {
+        NDIlib_send_destroy(_ndi_send_instance);
+    }
+}
+
+AvError NDISource::_Initialize() {
+    // Create NDI send instance
+    NDIlib_send_create_t send_create_desc;
+    send_create_desc.p_ndi_name = _source_name.c_str();
+    send_create_desc.clock_video = true;
+    _ndi_send_instance = NDIlib_send_create(&send_create_desc);
+
+    if(_ndi_send_instance == nullptr) {
+        return AvError::NDISENDINSTANCE;
+    }
+
+    return AvError::NOERROR;
+}
+
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
+    FUNCTION_CALL_DEBUG();
     
     // Build NDI packet from frame
     NDIlib_video_frame_v2_t video_frame;
@@ -33,24 +83,33 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
 
     // Send the frame
     NDIlib_send_send_video_v2(_ndi_send_instance, &video_frame);
+
+    return AvError::NOERROR;
 }
 
 /**
  * Only send audio frames that are interleaved 16-bit signed PCM.
  */
 AvError NDISource::_SendAudioFrame(const AVFrame *frame) {
+    FUNCTION_CALL_DEBUG();
+
+    if(frame->format != AV_SAMPLE_FMT_S16) {
+        return AvError::INVALIDSMPLFMT;
+    }
     
     // Build NDI packet from frame
     NDIlib_audio_frame_interleaved_16s_t audio_frame;
 
     audio_frame.sample_rate = frame->sample_rate;
-    audio_frame.no_channels = frame->channels;
+    audio_frame.no_channels = frame->ch_layout.nb_channels;
     audio_frame.no_samples = frame->nb_samples;
     audio_frame.timecode = NDIlib_send_timecode_synthesize;
     audio_frame.p_data = (int16_t *)frame->data[0];
 
     // Send the frame
     NDIlib_util_send_send_audio_interleaved_16s(_ndi_send_instance, &audio_frame);
+
+    return AvError::NOERROR;
 }
 
 } // namespace AV::Utils

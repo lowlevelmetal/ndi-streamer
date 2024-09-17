@@ -18,6 +18,7 @@
 // Local includes
 #include "macro.hpp"
 #include "mtavserver.hpp"
+#include "app.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -69,10 +70,10 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Create NDI AV Server
-    auto [ndiavserver, ndiavserver_err] = AV::Utils::MtAvServer::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-    if (ndiavserver_err.code() != (int)AV::Utils::AvError::NOERROR) {
-        ERROR("Error creating NDI AV Server: %s", ndiavserver_err.what());
+    // Create the application
+    auto [app, app_error] = App::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+    if (app_error.code() != (int)AV::Utils::AvError::NOERROR) {
+        ERROR("Error creating application: %s", app_error.what());
         return EXIT_FAILURE;
     }
 
@@ -81,16 +82,13 @@ int main(int argc, char **argv) {
     std::cin.get();
 #endif
 
-    ndiavserver->start();
-
-    // Main loop
-    while(1) {
-        auto err = ndiavserver->ProcessNextFrame();
-        if (err.code() != (int)AV::Utils::AvError::NOERROR) {
-            ERROR("Error processing next frame: %s", err.what());
-            break;
-        }
+    // Run the application
+    auto run_error = app->Run();
+    if (run_error.code() != (int)AV::Utils::AvError::NOERROR) {
+        ERROR("Error running application: %s", run_error.what());
+        return EXIT_FAILURE;
     }
+
 
     fflush(stdout);
     fflush(stderr);

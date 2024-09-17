@@ -47,6 +47,12 @@ ReadFrameResult Demuxer::ReadFrame() {
     int ret = av_read_frame(m_format_ctx, m_packet);
     if (ret < 0) {
         PRINT_FFMPEG_ERR(ret);
+
+        // If eof return a different error
+        if(ret == AVERROR_EOF) {
+            return {nullptr, AvError::DEMUXEREOF};
+        }
+
         return {nullptr, AvException(AvError::READFRAME)};
     }
 

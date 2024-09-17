@@ -49,6 +49,8 @@ enum class AvError {
     PACKETREF,
     BUFFEREMPTY,
     INVALIDFRAME,
+    INVALIDSMPLFMT,
+    DEMUXEREOF,
 };
 
 /**
