@@ -8,6 +8,7 @@
 
 #include "ndisource.hpp"
 #include "macro.hpp"
+#include "frame.hpp"
 
 namespace AV::Utils {
 
@@ -73,16 +74,24 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     
     // Build NDI packet from frame
     NDIlib_video_frame_v2_t video_frame;
+    bool free_buffer = false;
 
     switch(frame->format) {
     case AV_PIX_FMT_UYVY422:
         video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+        video_frame.p_data = frame->data[0];
+        video_frame.line_stride_in_bytes = frame->linesize[0];
+        break;
+    case AV_PIX_FMT_RGBA:
+        video_frame.FourCC = NDIlib_FourCC_type_RGBA;
+        video_frame.p_data = frame->data[0];
+        video_frame.line_stride_in_bytes = frame->linesize[0];
         break;
     case AV_PIX_FMT_NV12:
-        video_frame.FourCC = NDIlib_FourCC_video_type_NV12;
-        break;
-    case AV_PIX_FMT_YUV420P:
-        video_frame.FourCC = NDIlib_FourCC_type_UYVY;
+        video_frame.FourCC = NDIlib_FourCC_type_NV12;
+        video_frame.p_data = CreateNV12Buffer(frame);
+        video_frame.line_stride_in_bytes = frame->width;
+        free_buffer = true;
         break;
     default:
         return AvError::NDIINVALIDPIXFMT;
@@ -90,14 +99,16 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
 
     video_frame.xres = frame->width;
     video_frame.yres = frame->height;
-    video_frame.line_stride_in_bytes = frame->linesize[0];
     video_frame.frame_rate_N = _frame_rate.num;
     video_frame.frame_rate_D = _frame_rate.den;
     video_frame.timecode = NDIlib_send_timecode_synthesize;
-    video_frame.p_data = frame->data[0];
 
     // Send the frame
     NDIlib_send_send_video_v2(_ndi_send_instance, &video_frame);
+
+    if(free_buffer) {
+        delete video_frame.p_data;
+    }
 
     return AvError::NOERROR;
 }

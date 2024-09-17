@@ -70,6 +70,9 @@ namespace AV::Utils {
     DecoderOutput NVENCFilterDecoder::Decode() {
         FUNCTION_CALL_DEBUG();
 
+        av_frame_unref(_last_frame);
+        av_frame_unref(_filtered_frame);
+
         int ret = avcodec_receive_frame(_codec_ctx, _last_frame);
         if(ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             return {nullptr, AvError::DECODEREXHAUSTED};
@@ -94,9 +97,6 @@ namespace AV::Utils {
             PRINT_FFMPEG_ERR(ret);
             return {nullptr, AvError::FILTERGRAPHALLOC};
         }
-
-        // Reset old frame
-        //av_frame_unref(_last_frame);
 
         return {_filtered_frame, AvError::NOERROR};
 
@@ -161,7 +161,7 @@ namespace AV::Utils {
         }
 
         // Setup filter
-        const char *filter_description = "hwupload_cuda,scale_npp=format=yuv420p,hwdownload,format=yuv420p";
+        const char *filter_description = "hwupload_cuda,scale_npp=format=nv12,hwdownload,format=nv12";
 
         _filter_graph = avfilter_graph_alloc();
         if(_filter_graph == nullptr) {
@@ -199,7 +199,7 @@ namespace AV::Utils {
         }
 
         // Set output pixel formats
-        enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE};
+        enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_NV12, AV_PIX_FMT_NONE};
         if ((ret = av_opt_set_int_list(_buffersink_ctx, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN)) < 0) {
             DEBUG("av_opt_set_int_list failed");
             return AvError::FILTERGRAPHALLOC;
