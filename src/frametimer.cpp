@@ -114,6 +114,12 @@ bool FrameTimer::IsEmpty() {
     return _frames.empty();
 }
 
+bool FrameTimer::IsHalf() {
+    FUNCTION_CALL_DEBUG();
+
+    return _frames.size() >= _capacity / 2;
+}
+
 /**
  * @brief This function will order the frame based on the
  * pts, time_base, and frame_rate.

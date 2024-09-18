@@ -12,7 +12,8 @@
 #include "averror.hpp"
 #include "demuxer.hpp"
 #include "ndisource.hpp"
-#include "nvencfilterdecoder.hpp"
+#include "simplefilter.hpp"
+#include "decoder.hpp"
 #include "pixelencoder.hpp"
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
@@ -45,8 +46,9 @@ private:
 	std::string _ndi_source_name;
 	std::string _video_file_path;
 	std::shared_ptr<AV::Utils::Demuxer> _demuxer;
-	std::shared_ptr<AV::Utils::NVENCFilterDecoder> _video_decoder;
+	std::shared_ptr<AV::Utils::SimpleFilter> _simple_filter;
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
+	std::shared_ptr<AV::Utils::Decoder> _video_decoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
 	std::shared_ptr<AV::Utils::NDISource> _ndi_source;
 	

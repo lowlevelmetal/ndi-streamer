@@ -108,6 +108,18 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error allocating filter graph";
     case AvError::INOUTALLOC:
         return DEMUXSTR " Error allocating in/out";
+    case AvError::FILTER_GRAPH_ALLOC:
+        return DEMUXSTR " Error allocating filter graph";
+    case AvError::FILTER_GRAPH_PARSE:
+        return DEMUXSTR " Error parsing filter graph";
+    case AvError::FILTER_GRAPH_CONFIG:
+        return DEMUXSTR " Error configuring filter graph";
+    case AvError::FILTER_GRAPH_CREATE_FILTER:
+        return DEMUXSTR " Error creating filter";
+    case AvError::BUFFERSRC_ADD_FRAME:
+        return DEMUXSTR " Error adding frame to buffer source";
+    case AvError::BUFFERSINK_GET_FRAME:
+        return DEMUXSTR " Error getting frame from buffer sink";
     default:
         return DEMUXSTR " Unknown error";
     }

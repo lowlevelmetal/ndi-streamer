@@ -81,11 +81,22 @@ AV::Utils::AvException App::Run() {
 				break;
 			}
 
-			// Add packet to time controller
-			auto err = _frame_timer.AddFrame(decoded_frame);
-			if (err.code()) {
-				ERROR("Failed to add frame to timer: %s", err.what());
+			// filter decoded packet
+			auto [filtered_frame, filter_err] = _simple_filter->FilterFrame(decoded_frame);
+			if(filter_err.code()) {
+				ERROR("Failed to filter frame: %s", filter_err.what());
 				break;
+			}
+
+			// Add packets to frame timer
+			for(auto frame : filtered_frame) {
+				auto err = _frame_timer.AddFrame(frame);
+				if(err.code()) {
+					ERROR("Failed to add frame to timer: %s", err.what());
+					break;
+				}
+
+				av_frame_free(&frame);
 			}
 
 		} else if(current_packet->stream_index == _audio_stream_index) {
@@ -124,7 +135,7 @@ AV::Utils::AvException App::Run() {
 			}
 		}
 
-		if(_frame_timer.IsFull()) {
+		while(_frame_timer.IsHalf()) {
 			DEBUG("Sending out frames");
 			auto frame = _frame_timer.GetFrame();
 
@@ -194,13 +205,22 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	// Create the video decoder
-	auto [video_decoder, video_decoder_err] = AV::Utils::NVENCFilterDecoder::Create(video_cparam, video_time_base);
+	auto [video_decoder, video_decoder_err] = AV::Utils::Decoder::Create(video_cparam);
 	if(video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
 		DEBUG("Video decoder error: %s", video_decoder_err.what());
 		return (AV::Utils::AvError)video_decoder_err.code();
 	}
 
 	_video_decoder = std::move(video_decoder);
+
+	// Create simple filter
+	auto [simple_filter, simple_filter_err] = AV::Utils::SimpleFilter::CreateFilter("format=uyvy422", video_cparam, video_time_base);
+	if(simple_filter_err.code()) {
+		DEBUG("Simple filter error: %s", simple_filter_err.what());
+		return (AV::Utils::AvError)simple_filter_err.code();
+	}
+
+	_simple_filter = std::move(simple_filter);
 
 	// Create the audio decoder
 	auto [audio_decoder, audio_decoder_err] = AV::Utils::Decoder::Create(audio_cparam);

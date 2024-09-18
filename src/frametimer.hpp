@@ -20,7 +20,7 @@ extern "C" {
 #include <vector>
 
 // Defines
-#define AVUTILS_FRAMETIMER_DEFAULT_CAPACITY 10
+#define AVUTILS_FRAMETIMER_DEFAULT_CAPACITY 20
 
 /**
  * In Audio/Video, frames can be in a file out of order.
@@ -64,6 +64,8 @@ public:
     bool IsFull();
 
     bool IsEmpty();
+
+    bool IsHalf();
 
 private:
     AvError _ReorderFrames();
