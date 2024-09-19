@@ -29,4 +29,9 @@ AVFrame *CopyFrame(AVFrame *frame);
  */
 uint8_t *ConvertNV12BufferedToNV12(const AVFrame *frame);
 
+/**
+ * 
+ */
+void PrintPictType(AVPictureType type);
+
 } // namespace AV::Utils

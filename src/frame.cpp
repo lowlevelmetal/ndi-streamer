@@ -70,6 +70,40 @@ uint8_t *ConvertNV12BufferedToNV12(const AVFrame *frame) {
     return target_buffer;
 }
 
+/**
+ * @brief Print the picture type
+ * 
+ * @param type The picture type
+ */
+void PrintPictType(AVPictureType type) {
+    FUNCTION_CALL_DEBUG();
 
+    switch (type) {
+        case AV_PICTURE_TYPE_I:
+            DEBUG("Frame Type: I");
+            break;
+        case AV_PICTURE_TYPE_P:
+            DEBUG("Frame Type: P");
+            break;
+        case AV_PICTURE_TYPE_B:
+            DEBUG("Frame Type: B");
+            break;
+        case AV_PICTURE_TYPE_S:
+            DEBUG("Frame Type: S");
+            break;
+        case AV_PICTURE_TYPE_SI:
+            DEBUG("Frame Type: SI");
+            break;
+        case AV_PICTURE_TYPE_NONE:
+            DEBUG("Frame Type: NONE");
+            break;
+        case AV_PICTURE_TYPE_SP:
+            DEBUG("Frame Type: SP");
+            break;
+        default:
+            DEBUG("Frame Type: %d", type);
+            break;
+    }
+}
 
 } // namespace AV::Utils

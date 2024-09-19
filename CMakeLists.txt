@@ -38,7 +38,8 @@ set(SOURCES
     src/ndisource.cpp
     src/app.cpp
     src/simplefilter.cpp
-    src/cudafilter.cpp)
+    src/cudafilter.cpp
+    src/cudadecoder.cpp)
 
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

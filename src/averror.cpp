@@ -122,6 +122,14 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error getting frame from buffer sink";
     case AvError::FILTER_GET_BY_NAME:
         return DEMUXSTR " Error getting filter by name";
+    case AvError::NOHWCONFIG:
+        return DEMUXSTR " No hardware configuration";
+    case AvError::NOPIXFMT:
+        return DEMUXSTR " No pixel format";
+    case AvError::HWFRAME_TRANSFER:
+        return DEMUXSTR " Error transferring hardware frame";
+    case AvError::FRAMECOPY:
+        return DEMUXSTR " Error copying frame";
     default:
         return DEMUXSTR " Unknown error";
     }

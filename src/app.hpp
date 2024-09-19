@@ -18,6 +18,7 @@
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
 #include "cudafilter.hpp"
+#include "cudadecoder.hpp"
 
 extern "C" {
 	#include <libavcodec/codec_par.h>
@@ -49,6 +50,7 @@ private:
 	std::shared_ptr<AV::Utils::Demuxer> _demuxer;
 	std::shared_ptr<AV::Utils::CudaFilter> _cuda_filter;
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
+	std::shared_ptr<AV::Utils::CudaDecoder> _cuda_video_decoder;
 	std::shared_ptr<AV::Utils::Decoder> _video_decoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
 	std::shared_ptr<AV::Utils::NDISource> _ndi_source;

@@ -60,7 +60,7 @@ AV::Utils::AvException App::Run() {
 
 		if(current_packet->stream_index == _video_stream_index) {
 			if(!packet_in_decoder) {
-				auto err = _video_decoder->FillDecoder(current_packet);
+				auto err = _cuda_video_decoder->FillCudaDecoder(current_packet);
 				if(err.code()) {
 					ERROR("Failed to fill video decoder: %s", err.what());
 					break;
@@ -69,7 +69,7 @@ AV::Utils::AvException App::Run() {
 				packet_in_decoder = true;
 			}
 
-			auto [decoded_frame, decoder_err] = _video_decoder->Decode();
+			auto [decoded_frame, decoder_err] = _cuda_video_decoder->Decode();
 			if(decoder_err.code()) {
 				if((AV::Utils::AvError)decoder_err.code() == AV::Utils::AvError::DECODEREXHAUSTED) {
 					DEBUG("Decoder exhausted");
@@ -82,7 +82,7 @@ AV::Utils::AvException App::Run() {
 			}
 
 			// filter decoded packet
-			auto [filtered_frame, filter_err] = _cuda_filter->FilterFrame(decoded_frame);
+			/*auto [filtered_frame, filter_err] = _cuda_filter->FilterFrame(decoded_frame);
 			if(filter_err.code()) {
 				ERROR("Failed to filter frame: %s", filter_err.what());
 				break;
@@ -97,6 +97,12 @@ AV::Utils::AvException App::Run() {
 				}
 
 				av_frame_free(&frame);
+			}*/
+
+			auto err = _frame_timer.AddFrame(decoded_frame);
+			if(err.code()) {
+				ERROR("Failed to add frame to timer: %s", err.what());
+				break;
 			}
 
 		} else if(current_packet->stream_index == _audio_stream_index) {
@@ -205,13 +211,13 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	// Create the video decoder
-	auto [video_decoder, video_decoder_err] = AV::Utils::Decoder::Create(video_cparam);
-	if(video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
-		DEBUG("Video decoder error: %s", video_decoder_err.what());
-		return (AV::Utils::AvError)video_decoder_err.code();
+	auto [cuda_video_decoder, cuda_video_decoder_err] = AV::Utils::CudaDecoder::Create(video_cparam);
+	if(cuda_video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
+		DEBUG("Video decoder error: %s", cuda_video_decoder_err.what());
+		return (AV::Utils::AvError)cuda_video_decoder_err.code();
 	}
 
-	_video_decoder = std::move(video_decoder);
+	_cuda_video_decoder = std::move(cuda_video_decoder);
 
 	// Create simple filter
 	/*const std::string filter_description = "format=uyvy422";
@@ -223,14 +229,14 @@ AV::Utils::AvError App::_Initialize() {
 
 	_simple_filter = std::move(simple_filter);*/
 
-	const std::string filter_description = "hwupload_cuda,scale_npp=format=nv12,hwdownload";
+	/*const std::string filter_description = "hwupload_cuda,scale_npp=format=nv12,hwdownload";
 	auto [cuda_filter, cuda_filter_err] = AV::Utils::CudaFilter::Create(filter_description, video_cparam, video_time_base, AV_PIX_FMT_NV12);
 	if(cuda_filter_err.code()) {
 		DEBUG("Cuda filter error: %s", cuda_filter_err.what());
 		return (AV::Utils::AvError)cuda_filter_err.code();
 	}
 
-	_cuda_filter = std::move(cuda_filter);
+	_cuda_filter = std::move(cuda_filter);*/
 	
 
 	// Create the audio decoder

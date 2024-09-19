@@ -10,6 +10,12 @@
 #include "macro.hpp"
 #include "frame.hpp"
 
+#include <iostream>
+
+extern "C" {
+#include <libavutil/imgutils.h>
+}
+
 namespace AV::Utils {
 
 NDISourceResult NDISource::Create(const std::string &source_name, const AVRational &frame_rate) {
@@ -69,8 +75,32 @@ AvError NDISource::_Initialize() {
     return AvError::NOERROR;
 }
 
+uint8_t *CombinePlanes(const AVFrame *frame, uint planes) {
+    FUNCTION_CALL_DEBUG();
+
+    // Calculate correct buffer size
+    uint target_size = 0;
+    for(uint i = 0; i < planes; i++) {
+        target_size += frame->linesize[i] * frame->height;
+    }
+
+    // Allocate new buffer
+    uint8_t *target_buffer = new uint8_t[target_size];
+
+    // Copy each plane into the target buffer
+    uint offset = 0;
+    for(uint i = 0; i < planes; i++) {
+        memcpy(target_buffer + offset, frame->data[i], frame->linesize[i] * frame->height);
+        offset += frame->linesize[i] * frame->height;
+    }
+
+    return target_buffer;
+}
+
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
+
+    bool manual_free = false;
 
     // Build NDI packet from frame
     NDIlib_video_frame_v2_t video_frame;
@@ -99,8 +129,15 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     case AV_PIX_FMT_NV12:
         DEBUG("Sending NV12 frame");
         video_frame.FourCC = NDIlib_FourCC_type_NV12;
-        video_frame.p_data = frame->data[0];
-        video_frame.line_stride_in_bytes = frame->width;
+        video_frame.line_stride_in_bytes = frame->linesize[0];
+
+        DEBUG("data[0]: %p", frame->data[0]);
+        DEBUG("data[1]: %p", frame->data[1]);
+        DEBUG("data[1] - data[0]: %ld | Frame 0 Size: %d", frame->data[1] - frame->data[0], frame->linesize[0] * frame->height);
+
+        video_frame.p_data = CombinePlanes(frame, 2);
+        manual_free = true;
+
         break;
     default:
         return AvError::NDIINVALIDPIXFMT;
@@ -111,9 +148,15 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     video_frame.frame_rate_N = _frame_rate.num;
     video_frame.frame_rate_D = _frame_rate.den;
     video_frame.timecode = NDIlib_send_timecode_synthesize;
+    video_frame.picture_aspect_ratio = (float)frame->width / (float)frame->height;
+    video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
 
     // Send the frame
     NDIlib_send_send_video_v2(_ndi_send_instance, &video_frame);
+
+    if(manual_free) {
+        delete[] video_frame.p_data;
+    }
 
     return AvError::NOERROR;
 }
