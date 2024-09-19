@@ -120,6 +120,8 @@ const char *AvException::what() const noexcept {
         return DEMUXSTR " Error adding frame to buffer source";
     case AvError::BUFFERSINK_GET_FRAME:
         return DEMUXSTR " Error getting frame from buffer sink";
+    case AvError::FILTER_GET_BY_NAME:
+        return DEMUXSTR " Error getting filter by name";
     default:
         return DEMUXSTR " Unknown error";
     }

@@ -82,7 +82,7 @@ AV::Utils::AvException App::Run() {
 			}
 
 			// filter decoded packet
-			auto [filtered_frame, filter_err] = _simple_filter->FilterFrame(decoded_frame);
+			auto [filtered_frame, filter_err] = _cuda_filter->FilterFrame(decoded_frame);
 			if(filter_err.code()) {
 				ERROR("Failed to filter frame: %s", filter_err.what());
 				break;
@@ -214,13 +214,24 @@ AV::Utils::AvError App::_Initialize() {
 	_video_decoder = std::move(video_decoder);
 
 	// Create simple filter
-	auto [simple_filter, simple_filter_err] = AV::Utils::SimpleFilter::CreateFilter("format=uyvy422", video_cparam, video_time_base);
+	/*const std::string filter_description = "format=uyvy422";
+	auto [simple_filter, simple_filter_err] = AV::Utils::SimpleFilter::CreateFilter(filter_description, video_cparam, video_time_base);
 	if(simple_filter_err.code()) {
 		DEBUG("Simple filter error: %s", simple_filter_err.what());
 		return (AV::Utils::AvError)simple_filter_err.code();
 	}
 
-	_simple_filter = std::move(simple_filter);
+	_simple_filter = std::move(simple_filter);*/
+
+	const std::string filter_description = "hwupload_cuda,scale_npp=format=nv12,hwdownload";
+	auto [cuda_filter, cuda_filter_err] = AV::Utils::CudaFilter::Create(filter_description, video_cparam, video_time_base, AV_PIX_FMT_NV12);
+	if(cuda_filter_err.code()) {
+		DEBUG("Cuda filter error: %s", cuda_filter_err.what());
+		return (AV::Utils::AvError)cuda_filter_err.code();
+	}
+
+	_cuda_filter = std::move(cuda_filter);
+	
 
 	// Create the audio decoder
 	auto [audio_decoder, audio_decoder_err] = AV::Utils::Decoder::Create(audio_cparam);
