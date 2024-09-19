@@ -9,6 +9,8 @@
 #include "frame.hpp"
 #include "macro.hpp"
 
+#include <chrono>
+
 extern "C" {
 #include <libavutil/imgutils.h>
 }
@@ -109,6 +111,11 @@ void PrintPictType(AVPictureType type) {
 uint8_t *CombinePlanesNV12(const AVFrame *frame, uint planes) {
     FUNCTION_CALL_DEBUG();
 
+#ifdef _DEBUG
+    // profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
     // Get width and height of each plane
     uint widths[2];
     uint heights[2];
@@ -134,6 +141,12 @@ uint8_t *CombinePlanesNV12(const AVFrame *frame, uint planes) {
         memcpy(target_buffer + offset, frame->data[i], frame->linesize[i] * heights[i]);
         offset += frame->linesize[i] * heights[i];
     }
+
+#ifdef _DEBUG
+    // profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Combine planes time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return target_buffer;
 }

@@ -11,6 +11,7 @@
 #include "frame.hpp"
 
 #include <iostream>
+#include <chrono>
 
 extern "C" {
 #include <libavutil/imgutils.h>
@@ -78,6 +79,12 @@ AvError NDISource::_Initialize() {
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
 
+#ifdef _DEBUG
+    // profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
+
     bool manual_free = false;
 
     // Build NDI packet from frame
@@ -126,7 +133,6 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     video_frame.frame_rate_N = _frame_rate.num;
     video_frame.frame_rate_D = _frame_rate.den;
     video_frame.timecode = NDIlib_send_timecode_synthesize;
-    video_frame.picture_aspect_ratio = (float)frame->width / (float)frame->height;
     video_frame.frame_format_type = NDIlib_frame_format_type_progressive;
 
     // Send the frame
@@ -135,6 +141,12 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     if(manual_free) {
         delete[] video_frame.p_data;
     }
+
+#ifdef _DEBUG
+    // profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("NDI Send Video Frame time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return AvError::NOERROR;
 }
