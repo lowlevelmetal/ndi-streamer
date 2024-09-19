@@ -87,7 +87,7 @@ CudaDecoderOutput CudaDecoder::Decode() {
 #ifdef _DEBUG
     // Profile function
     auto time_end = std::chrono::high_resolution_clock::now();
-    DEBUG("Decode time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+    DEBUG("CUDA Decode time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
 #endif
 
     // Print frame info

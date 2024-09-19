@@ -20,7 +20,7 @@ extern "C" {
 #include <vector>
 
 // Defines
-#define AVUTILS_FRAMETIMER_DEFAULT_CAPACITY 100
+#define AVUTILS_FRAMETIMER_DEFAULT_CAPACITY 75
 
 /**
  * In Audio/Video, frames can be in a file out of order.
