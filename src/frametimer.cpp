@@ -11,6 +11,7 @@
 #include "macro.hpp"
 
 #include <algorithm>
+#include <chrono>
 
 namespace AV::Utils {
 
@@ -132,6 +133,11 @@ bool FrameTimer::IsHalf() {
 AvError FrameTimer::_ReorderFrames() {
     FUNCTION_CALL_DEBUG();
 
+#ifdef _DEBUG
+    // profile function
+    auto time_start = std::chrono::high_resolution_clock::now();
+#endif
+
     // Sort the frames based on pts order
     std::sort(_frames.begin(), _frames.end(), [](AVFrame *a, AVFrame *b) {
         // Force a universal time unit of microseconds
@@ -140,6 +146,12 @@ AvError FrameTimer::_ReorderFrames() {
 
         return apts > bpts;
     });
+
+#ifdef _DEBUG
+    // profile function
+    auto time_end = std::chrono::high_resolution_clock::now();
+    DEBUG("Frame reorder time (seconds): %f", std::chrono::duration<double>(time_end - time_start).count());
+#endif
 
     return AvError::NOERROR;
 }

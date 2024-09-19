@@ -34,4 +34,6 @@ uint8_t *ConvertNV12BufferedToNV12(const AVFrame *frame);
  */
 void PrintPictType(AVPictureType type);
 
+uint8_t *CombinePlanesNV12(const AVFrame *frame, uint planes);
+
 } // namespace AV::Utils

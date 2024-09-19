@@ -75,28 +75,6 @@ AvError NDISource::_Initialize() {
     return AvError::NOERROR;
 }
 
-uint8_t *CombinePlanes(const AVFrame *frame, uint planes) {
-    FUNCTION_CALL_DEBUG();
-
-    // Calculate correct buffer size
-    uint target_size = 0;
-    for(uint i = 0; i < planes; i++) {
-        target_size += frame->linesize[i] * frame->height;
-    }
-
-    // Allocate new buffer
-    uint8_t *target_buffer = new uint8_t[target_size];
-
-    // Copy each plane into the target buffer
-    uint offset = 0;
-    for(uint i = 0; i < planes; i++) {
-        memcpy(target_buffer + offset, frame->data[i], frame->linesize[i] * frame->height);
-        offset += frame->linesize[i] * frame->height;
-    }
-
-    return target_buffer;
-}
-
 AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
 
@@ -135,7 +113,7 @@ AvError NDISource::_SendVideoFrame(const AVFrame *frame) {
         DEBUG("data[1]: %p", frame->data[1]);
         DEBUG("data[1] - data[0]: %ld | Frame 0 Size: %d", frame->data[1] - frame->data[0], frame->linesize[0] * frame->height);
 
-        video_frame.p_data = CombinePlanes(frame, 2);
+        video_frame.p_data = CombinePlanesNV12(frame, 2);
         manual_free = true;
 
         break;

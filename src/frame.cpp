@@ -106,4 +106,36 @@ void PrintPictType(AVPictureType type) {
     }
 }
 
+uint8_t *CombinePlanesNV12(const AVFrame *frame, uint planes) {
+    FUNCTION_CALL_DEBUG();
+
+    // Get width and height of each plane
+    uint widths[2];
+    uint heights[2];
+
+    widths[0] = frame->width;
+    heights[0] = frame->height;
+
+    widths[1] = frame->width;
+    heights[1] = frame->height / 2;
+
+    // Calculate correct buffer size
+    uint target_size = 0;
+    for(uint i = 0; i < planes; i++) {
+        target_size += frame->linesize[i] * heights[i];
+    }
+
+    // Allocate new buffer
+    uint8_t *target_buffer = new uint8_t[target_size];
+
+    // Copy each plane into the target buffer
+    uint offset = 0;
+    for(uint i = 0; i < planes; i++) {
+        memcpy(target_buffer + offset, frame->data[i], frame->linesize[i] * heights[i]);
+        offset += frame->linesize[i] * heights[i];
+    }
+
+    return target_buffer;
+}
+
 } // namespace AV::Utils
