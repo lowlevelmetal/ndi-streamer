@@ -27,7 +27,7 @@ extern "C" {
 #include <thread>
 #include <mutex>
 
-#define FRAME_QUEUE_SIZE 200
+#define FRAME_QUEUE_SIZE 50
 
 namespace AV::Utils {
 
