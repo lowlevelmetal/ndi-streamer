@@ -47,13 +47,14 @@ AvException AsyncNDISource::SendFrame(const AVFrame *frame) {
     auto size = _frame_queue.size();
     _frame_queue_mutex.unlock();
     while(size >= FRAME_QUEUE_SIZE) {
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         _frame_queue_mutex.lock();
         size = _frame_queue.size();
         _frame_queue_mutex.unlock();
     }
 
     _frame_queue_mutex.lock();
+    DEBUG("Frame Queue Size: %ld", _frame_queue.size());
     _frame_queue.push_back(frame_copy);
     _frame_queue_mutex.unlock();
 
@@ -119,7 +120,7 @@ void AsyncNDISource::_Thread_FrameSender() {
             av_frame_free(&frame);
         } else {
             lock.unlock();
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
     
