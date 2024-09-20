@@ -1,7 +1,7 @@
 /**
- * @file app.hpp
+ * @file vaapiapp.hpp
  * @brief This file includes the main application class.
- * @date 2024-09-16
+ * @date 2024-09-19
  * @author Matthew Todd Geiger
  * @version 1.0
  */
@@ -12,11 +12,11 @@
 #include "averror.hpp"
 #include "demuxer.hpp"
 #include "ndisource.hpp"
-#include "simplefilter.hpp"
 #include "decoder.hpp"
 #include "pixelencoder.hpp"
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
+#include "vaapidecoder.hpp"
 
 extern "C" {
 	#include <libavcodec/codec_par.h>
@@ -26,19 +26,19 @@ extern "C" {
 #include <string>
 #include <memory>
 
-class App;
-using AppResult = std::pair<std::shared_ptr<App>, AV::Utils::AvException>;
+class VAAPIApp;
+using VAAPIAppResult = std::pair<std::shared_ptr<VAAPIApp>, AV::Utils::AvException>;
 
-class App {
+class VAAPIApp {
 private:
-	App(const std::string &ndi_source_name, const std::string &video_file_path);
+	VAAPIApp(const std::string &ndi_source_name, const std::string &video_file_path);
 	AV::Utils::AvError _Initialize();
 
 public:
-	~App() = default;
+	~VAAPIApp() = default;
 
 	// Factory
-	static AppResult Create(const std::string &ndi_source_name, const std::string &video_file_path);
+	static VAAPIAppResult Create(const std::string &ndi_source_name, const std::string &video_file_path);
 
 	AV::Utils::AvException Run();
 
@@ -47,10 +47,9 @@ private:
 	std::string _video_file_path;
 	std::shared_ptr<AV::Utils::Demuxer> _demuxer;
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
-	std::shared_ptr<AV::Utils::Decoder> _video_decoder;
+	std::shared_ptr<AV::Utils::VAAPIDecoder> _vaapi_video_decoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
 	std::shared_ptr<AV::Utils::NDISource> _ndi_source;
-	std::shared_ptr<AV::Utils::SimpleFilter> _simple_filter;
 	
 	AV::Utils::FrameTimer _frame_timer;
 

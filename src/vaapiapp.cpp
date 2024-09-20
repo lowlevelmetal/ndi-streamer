@@ -1,12 +1,12 @@
 /**
- * @file app.cpp
+ * @file vaapiapp.cpp
  * @brief This file includes the main application class.
- * @date 2024-09-16
+ * @date 2024-09-19
  * @author Matthew Todd Geiger
  * @version 1.0
  */
 
-#include "app.hpp"
+#include "vaapiapp.hpp"
 #include "audioresampler.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
@@ -18,7 +18,7 @@ extern "C" {
 	#include <libavutil/pixfmt.h>
 }
 
-AV::Utils::AvException App::Run() {
+AV::Utils::AvException VAAPIApp::Run() {
 	bool packets_exhausted = false;
 	bool packet_in_decoder = false;
 	AVPacket *current_packet = nullptr;
@@ -60,7 +60,7 @@ AV::Utils::AvException App::Run() {
 
 		if(current_packet->stream_index == _video_stream_index) {
 			if(!packet_in_decoder) {
-				auto err = _video_decoder->FillDecoder(current_packet);
+				auto err = _vaapi_video_decoder->FillVAAPIDecoder(current_packet);
 				if(err.code()) {
 					ERROR("Failed to fill video decoder: %s", err.what());
 					break;
@@ -69,7 +69,7 @@ AV::Utils::AvException App::Run() {
 				packet_in_decoder = true;
 			}
 
-			auto [decoded_frame, decoder_err] = _video_decoder->Decode();
+			auto [decoded_frame, decoder_err] = _vaapi_video_decoder->Decode();
 			if(decoder_err.code()) {
 				if((AV::Utils::AvError)decoder_err.code() == AV::Utils::AvError::DECODEREXHAUSTED) {
 					DEBUG("Decoder exhausted");
@@ -81,21 +81,10 @@ AV::Utils::AvException App::Run() {
 				break;
 			}
 
-			auto [filtered_frames, filter_err] = _simple_filter->FilterFrame(decoded_frame);
-			if(filter_err.code()) {
-				ERROR("Failure in filter: %s", filter_err.what());
+			auto err = _frame_timer.AddFrame(decoded_frame);
+			if(err.code()) {
+				ERROR("Failed to add frame to timer: %s", err.what());
 				break;
-			}
-
-			// Add packets to frame timer
-			for(auto frame : filtered_frames) {
-				auto err = _frame_timer.AddFrame(frame);
-				if(err.code()) {
-					ERROR("Failed to add frame to timer: %s", err.what());
-					break;
-				}
-
-				av_frame_free(&frame);
 			}
 
 		} else if(current_packet->stream_index == _audio_stream_index) {
@@ -151,11 +140,11 @@ AV::Utils::AvException App::Run() {
 	return AV::Utils::AvError::NOERROR;
 }
 
-AppResult App::Create(const std::string &ndi_source_name, const std::string &video_file_path) {
+VAAPIAppResult VAAPIApp::Create(const std::string &ndi_source_name, const std::string &video_file_path) {
 	AV::Utils::AvException err;
 
 	try {
-		return {std::shared_ptr<App>(new App(ndi_source_name, video_file_path)), AV::Utils::AvError::NOERROR};
+		return {std::shared_ptr<VAAPIApp>(new VAAPIApp(ndi_source_name, video_file_path)), AV::Utils::AvError::NOERROR};
 	} catch(AV::Utils::AvException e) {
 		err = e;
 		DEBUG("Error while creating app: %s", e.what());
@@ -164,14 +153,14 @@ AppResult App::Create(const std::string &ndi_source_name, const std::string &vid
 	return {nullptr, err};
 }
 
-App::App(const std::string &ndi_source_name, const std::string &video_file_path) : _ndi_source_name(ndi_source_name), _video_file_path(video_file_path) {
+VAAPIApp::VAAPIApp(const std::string &ndi_source_name, const std::string &video_file_path) : _ndi_source_name(ndi_source_name), _video_file_path(video_file_path) {
 	auto err = _Initialize();
 	if(err != AV::Utils::AvError::NOERROR) {
 		throw err;
 	}
 }
 
-AV::Utils::AvError App::_Initialize() {
+AV::Utils::AvError VAAPIApp::_Initialize() {
 	// Create the demuxer
 	auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(_video_file_path);
 	if(demuxer_err.code() != (int)AV::Utils::AvError::NOERROR) {
@@ -204,25 +193,14 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	// Create the video decoder
-	auto [video_decoder, video_decoder_err] = AV::Utils::Decoder::Create(video_cparam);
-	if(video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
-		DEBUG("Video decoder error: %s", video_decoder_err.what());
-		return (AV::Utils::AvError)video_decoder_err.code();
+	auto [vaapi_video_decoder, vaapi_video_decoder_err] = AV::Utils::VAAPIDecoder::Create(video_cparam);
+	if(vaapi_video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
+		DEBUG("Video decoder error: %s", vaapi_video_decoder_err.what());
+		return (AV::Utils::AvError)vaapi_video_decoder_err.code();
 	}
 
-	_video_decoder = std::move(video_decoder);
-
-	// Create simple filter
-	const std::string filter_description = "format=uyvy422";
-	auto [simple_filter, simple_filter_err] = AV::Utils::SimpleFilter::CreateFilter(filter_description, video_cparam, video_time_base);
-	if(simple_filter_err.code()) {
-		DEBUG("Simple filter error: %s", simple_filter_err.what());
-		return (AV::Utils::AvError)simple_filter_err.code();
-	}
-
-	_simple_filter = std::move(simple_filter);
+	_vaapi_video_decoder = std::move(vaapi_video_decoder);
 	
-
 	// Create the audio decoder
 	auto [audio_decoder, audio_decoder_err] = AV::Utils::Decoder::Create(audio_cparam);
 	if(audio_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
