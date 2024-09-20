@@ -60,7 +60,7 @@ AV::Utils::AvException App::Run() {
 
 		if(current_packet->stream_index == _video_stream_index) {
 			if(!packet_in_decoder) {
-				auto err = _cuda_video_decoder->FillCudaDecoder(current_packet);
+				auto err = _vaapi_video_decoder->FillVAAPIDecoder(current_packet);
 				if(err.code()) {
 					ERROR("Failed to fill video decoder: %s", err.what());
 					break;
@@ -69,7 +69,7 @@ AV::Utils::AvException App::Run() {
 				packet_in_decoder = true;
 			}
 
-			auto [decoded_frame, decoder_err] = _cuda_video_decoder->Decode();
+			auto [decoded_frame, decoder_err] = _vaapi_video_decoder->Decode();
 			if(decoder_err.code()) {
 				if((AV::Utils::AvError)decoder_err.code() == AV::Utils::AvError::DECODEREXHAUSTED) {
 					DEBUG("Decoder exhausted");
@@ -211,13 +211,22 @@ AV::Utils::AvError App::_Initialize() {
 	}
 
 	// Create the video decoder
-	auto [cuda_video_decoder, cuda_video_decoder_err] = AV::Utils::CudaDecoder::Create(video_cparam);
+	auto [vaapi_video_decoder, vaapi_video_decoder_err] = AV::Utils::VAAPIDecoder::Create(video_cparam);
+	if(vaapi_video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
+		DEBUG("Video decoder error: %s", vaapi_video_decoder_err.what());
+		return (AV::Utils::AvError)vaapi_video_decoder_err.code();
+	}
+
+	_vaapi_video_decoder = std::move(vaapi_video_decoder);
+
+	// Create the video decoder
+	/*auto [cuda_video_decoder, cuda_video_decoder_err] = AV::Utils::CudaDecoder::Create(video_cparam);
 	if(cuda_video_decoder_err.code() != (int)AV::Utils::AvError::NOERROR) {
 		DEBUG("Video decoder error: %s", cuda_video_decoder_err.what());
 		return (AV::Utils::AvError)cuda_video_decoder_err.code();
 	}
 
-	_cuda_video_decoder = std::move(cuda_video_decoder);
+	_cuda_video_decoder = std::move(cuda_video_decoder);*/
 
 	// Create simple filter
 	/*const std::string filter_description = "format=uyvy422";
