@@ -20,17 +20,17 @@ namespace AV::Utils {
  * @brief This class just makes sure that the NDI library is initialized and deinitialized properly.
  * Attach this to anything that uses the NDI SDK.
  */
-class Ndi {
+class NDI {
 public:
     /**
      * @brief Construct a new Ndi object
      */
-    Ndi();
+    NDI();
 
     /**
      * @brief Destroy the Ndi object
      */
-    ~Ndi();
+    ~NDI();
 
 private:
     static int m_open_instances;

@@ -10,7 +10,6 @@
 #include "audioresampler.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
-#include "ndisource.hpp"
 #include "pixelencoder.hpp"
 
 extern "C" {
@@ -228,7 +227,7 @@ AV::Utils::AvError CudaApp::_Initialize() {
 	_audio_resampler = std::move(audio_resampler);
 
 	// Create NDI Source
-	auto [ndi_source, ndi_source_err] = AV::Utils::NDISource::Create(_ndi_source_name, video_cparam->framerate);
+	auto [ndi_source, ndi_source_err] = AV::Utils::AsyncNDISource::Create(_ndi_source_name, video_cparam->framerate);
 	if(ndi_source_err.code()) {
 		DEBUG("NDI Source error: %s", ndi_source_err.what());
 		return (AV::Utils::AvError)ndi_source_err.code();

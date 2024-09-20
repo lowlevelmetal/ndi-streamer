@@ -11,7 +11,7 @@
 // Local includes
 #include "averror.hpp"
 #include "demuxer.hpp"
-#include "ndisource.hpp"
+#include "asyncndisource.hpp"
 #include "decoder.hpp"
 #include "pixelencoder.hpp"
 #include "audioresampler.hpp"
@@ -49,7 +49,7 @@ private:
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
 	std::shared_ptr<AV::Utils::CudaDecoder> _cuda_video_decoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
-	std::shared_ptr<AV::Utils::NDISource> _ndi_source;
+	std::shared_ptr<AV::Utils::AsyncNDISource> _ndi_source;
 	
 	AV::Utils::FrameTimer _frame_timer;
 

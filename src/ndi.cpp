@@ -10,12 +10,12 @@
 #include "macro.hpp"
 
 namespace AV::Utils {
-    int Ndi::m_open_instances = 0;
+    int NDI::m_open_instances = 0;
 
     /**
-     * @brief Construct a new Ndi object
+     * @brief Construct a new NDI object
      */
-    Ndi::Ndi() {
+    NDI::NDI() {
         FUNCTION_CALL_DEBUG();
 
         if(!m_open_instances) {
@@ -27,9 +27,9 @@ namespace AV::Utils {
     }
 
     /**
-     * @brief Destroy the Ndi object
+     * @brief Destroy the NDI object
      */
-    Ndi::~Ndi() {
+    NDI::~NDI() {
         FUNCTION_CALL_DEBUG();
 
         m_open_instances--;

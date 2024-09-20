@@ -28,9 +28,9 @@ namespace AV::Utils {
 
 // Forward declarations and type definitions
 class NDISource;
-using NDISourceResult = std::pair<std::shared_ptr<NDISource>, AvException>;
+using NDISourceResult = std::pair<std::shared_ptr<NDISource>, const AvException>;
 
-class NDISource : public Ndi {
+class NDISource : public NDI {
 private:
     NDISource(const std::string &source_name, const AVRational &frame_rate);
     AvError _Initialize();

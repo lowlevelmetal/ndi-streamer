@@ -46,7 +46,7 @@ set(SOURCES
     src/ndi.cpp
     src/frametimer.cpp
     src/frame.cpp
-    src/ndisource.cpp
+    src/asyncndisource.cpp
     src/app.cpp
     src/simplefilter.cpp
     src/ndistreamersoftware.cpp)
@@ -59,7 +59,7 @@ set(CUDASOURCES
     src/ndi.cpp
     src/frametimer.cpp
     src/frame.cpp
-    src/ndisource.cpp
+    src/asyncndisource.cpp
     src/cudaapp.cpp
     src/cudadecoder.cpp
     src/ndistreamercuda.cpp)
