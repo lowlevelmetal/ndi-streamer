@@ -1,8 +1,8 @@
 /*
- * vaapindistreamer
- * vaapindistreamer.cpp
+ * cudandistreamer
+ * cudandistreamer.cpp
  *
- * 02-19-2024
+ * 02-20-2024
  * Matthew Todd Geiger
  */
 
@@ -16,7 +16,7 @@
 
 // Local includes
 #include "macro.hpp"
-#include "vaapiapp.hpp"
+#include "cudaapp.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     PRINT("Video File: %s", cmdlineargs.videofile.c_str());
 
     // Create the application
-    auto [app, app_error] = VAAPIApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+    auto [app, app_error] = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     if (app_error.code() != (int)AV::Utils::AvError::NOERROR) {
         ERROR("Error creating application: %s", app_error.what());
         return EXIT_FAILURE;

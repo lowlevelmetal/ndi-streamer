@@ -51,6 +51,19 @@ set(SOURCES
     src/simplefilter.cpp
     src/ndistreamersoftware.cpp)
 
+set(CUDASOURCES
+    src/averror.cpp
+    src/demuxer.cpp
+    src/decoder.cpp
+    src/audioresampler.cpp
+    src/ndi.cpp
+    src/frametimer.cpp
+    src/frame.cpp
+    src/ndisource.cpp
+    src/cudaapp.cpp
+    src/cudadecoder.cpp
+    src/ndistreamercuda.cpp)
+
 # Set executable name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_executable(ndistreamer_vaapi_debug ${VAAPISOURCES})
@@ -58,12 +71,18 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     add_executable(ndistreamer_debug ${SOURCES})
     target_link_libraries(ndistreamer_debug ${NDI_LIB} ${FFMPEG_LIBRARIES})
+
+    add_executable(ndistreamer_cuda_debug ${CUDASOURCES})
+    target_link_libraries(ndistreamer_cuda_debug ${NDI_LIB} ${FFMPEG_LIBRARIES})
 else()
     add_executable(ndistreamer_vaapi ${VAAPISOURCES})
     target_link_libraries(ndistreamer_vaapi ${NDI_LIB} ${FFMPEG_LIBRARIES})
 
     add_executable(ndistreamer ${SOURCES})
     target_link_libraries(ndistreamer ${NDI_LIB} ${FFMPEG_LIBRARIES})
+
+    add_executable(ndistreamer_cuda ${CUDASOURCES})
+    target_link_libraries(ndistreamer_cuda ${NDI_LIB} ${FFMPEG_LIBRARIES})
 endif()
 
 # Enable testing
