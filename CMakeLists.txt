@@ -33,7 +33,7 @@ set(VAAPISOURCES
     src/ndi.cpp
     src/frametimer.cpp
     src/frame.cpp
-    src/ndisource.cpp
+    src/asyncndisource.cpp
     src/vaapiapp.cpp
     src/vaapidecoder.cpp
     src/ndistreamervaapi.cpp)
