@@ -1,4 +1,4 @@
-# ndi-streamer
+# ndistreamer
 Stream the contents of an AV file over NDI
 
 ## Building
@@ -43,8 +43,11 @@ This will generate the executable in your build directory
     -s "NDI Source Name"
 ```
 
+There are experimental inprogress versions available for vaapi and cuda. `ndistreamer_vaapi` and `ndistreamer_cuda`
+
 ## Running tests
-Build the debug version of the software as shown above then navigate into your build directory
+These tests are minimal and incomplete. It is on my todo list to create a better testing system.
+Build the version of the software you want, as shown above, then navigate into your build directory
 ```
 cd build
 ```
@@ -58,6 +61,8 @@ ctest
 Make sure you have installed the NDI SDK in your /opt/ndi directory
 ### Can't see my NDI source on the network
 Make sure you have the avahi service daemon running on your host machine
+### VAAPI and/or CUDA is not working
+Make sure you build FFmpeg with the proper vaapi and/or cuda support
 
 ## Mission
 
