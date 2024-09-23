@@ -1,6 +1,3 @@
 TODO List
-	- Does PTS even work? Investigate!
-	- Multithread NDI so compression gets the flying fuck out of the way
-		- Clean up this code!
-			- Replace condition_variables with something more fitting
-		- Add support for more sample and pixel formats
+	- Write a fragment shader that converts nv12 to uyvy. The GPU is always ahead of the NDI functions, so lets make it easier on NDI
+	- Cleanup the app classes
