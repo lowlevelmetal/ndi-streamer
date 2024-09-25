@@ -1,3 +1,4 @@
 ndi-streamer
 build*/**
 .cache/**
+.vscode/**
