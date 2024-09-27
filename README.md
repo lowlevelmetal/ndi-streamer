@@ -1,9 +1,13 @@
 # ndistreamer
 Stream the contents of an AV file over NDI
 
+## Mission
+
+Develop a lightweight tool for streaming NDI from a linux environment.
+
 ## Building
 
-This application has only been built and tested using ubuntu.
+This application has only been built and tested using gentoo.
 Porting to other distros would be trivial
 
 ### Dependencies
@@ -41,9 +45,8 @@ This will generate the executable in your build directory
 ./ndistreamer
     -i /path/to/your/media.mp4
     -s "NDI Source Name"
+    -t [software, cuda, vaapi]
 ```
-
-There are experimental inprogress versions available for vaapi and cuda. `ndistreamer_vaapi` and `ndistreamer_cuda`
 
 ## Running tests
 These tests are minimal and incomplete. It is on my todo list to create a better testing system.
@@ -63,8 +66,3 @@ Make sure you have installed the NDI SDK in your /opt/ndi directory
 Make sure you have the avahi service daemon running on your host machine
 ### VAAPI and/or CUDA is not working
 Make sure you build FFmpeg with the proper vaapi and/or cuda support
-
-## Mission
-
-Develop a lightweight, versatile tool capable of decoding both audio and video content, with potential cross-platform functionality, enabling seamless streaming via NDI.
-
