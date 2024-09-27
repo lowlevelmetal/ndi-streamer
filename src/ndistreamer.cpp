@@ -92,17 +92,11 @@ int main(int argc, char **argv) {
 
     // Create the application
     if(cmdlineargs.hwtype == "software") {
-        auto [temp_app, temp_err] = SoftwareApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-        app = temp_app;
-        err = temp_err;
+        std::tie(app, err) = SoftwareApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     } else if(cmdlineargs.hwtype == "vaapi") {
-        auto [temp_app, temp_err] = VAAPIApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-        app = temp_app;
-        err = temp_err;
+        std::tie(app, err) = VAAPIApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     } else if(cmdlineargs.hwtype == "cuda") {
-        auto [temp_app, temp_err] = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-        app = temp_app;
-        err = temp_err;
+        std::tie(app, err) = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     }
 
     if(app != nullptr) {
