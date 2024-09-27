@@ -1,7 +1,7 @@
 /**
- * @file cudaapp.hpp
+ * @file softwareapp.hpp
  * @brief This file includes the main application class.
- * @date 2024-09-19
+ * @date 2024-09-16
  * @author Matthew Todd Geiger
  * @version 1.0
  */
@@ -12,11 +12,11 @@
 #include "averror.hpp"
 #include "demuxer.hpp"
 #include "asyncndisource.hpp"
+#include "simplefilter.hpp"
 #include "decoder.hpp"
 #include "pixelencoder.hpp"
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
-#include "cudadecoder.hpp"
 #include "app.hpp"
 
 extern "C" {
@@ -27,19 +27,19 @@ extern "C" {
 #include <string>
 #include <memory>
 
-class CudaApp;
-using CudaAppResult = std::pair<std::shared_ptr<CudaApp>, AV::Utils::AvException>;
+class SoftwareApp;
+using SoftwareAppResult = std::pair<std::shared_ptr<SoftwareApp>, AV::Utils::AvException>;
 
-class CudaApp : public App {
+class SoftwareApp : public App {
 private:
-	CudaApp(const std::string &ndi_source_name, const std::string &video_file_path);
+	SoftwareApp(const std::string &ndi_source_name, const std::string &video_file_path);
 	AV::Utils::AvError _Initialize();
 
 public:
-	~CudaApp() = default;
+	~SoftwareApp() = default;
 
 	// Factory
-	static CudaAppResult Create(const std::string &ndi_source_name, const std::string &video_file_path);
+	static SoftwareAppResult Create(const std::string &ndi_source_name, const std::string &video_file_path);
 
 	AV::Utils::AvException Run() override;
 
@@ -48,9 +48,10 @@ private:
 	std::string _video_file_path;
 	std::shared_ptr<AV::Utils::Demuxer> _demuxer;
 	std::shared_ptr<AV::Utils::Decoder> _audio_decoder;
-	std::shared_ptr<AV::Utils::CudaDecoder> _cuda_video_decoder;
+	std::shared_ptr<AV::Utils::Decoder> _video_decoder;
 	std::shared_ptr<AV::Utils::AudioResampler> _audio_resampler;
 	std::shared_ptr<AV::Utils::AsyncNDISource> _ndi_source;
+	std::shared_ptr<AV::Utils::SimpleFilter> _simple_filter;
 	
 	AV::Utils::FrameTimer _frame_timer;
 

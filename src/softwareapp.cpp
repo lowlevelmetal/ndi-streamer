@@ -1,12 +1,12 @@
 /**
- * @file app.cpp
+ * @file softwareapp.cpp
  * @brief This file includes the main application class.
  * @date 2024-09-16
  * @author Matthew Todd Geiger
  * @version 1.0
  */
 
-#include "app.hpp"
+#include "softwareapp.hpp"
 #include "audioresampler.hpp"
 #include "averror.hpp"
 #include "macro.hpp"
@@ -17,7 +17,7 @@ extern "C" {
 	#include <libavutil/pixfmt.h>
 }
 
-AV::Utils::AvException App::Run() {
+AV::Utils::AvException SoftwareApp::Run() {
 	bool packets_exhausted = false;
 	bool packet_in_decoder = false;
 	AVPacket *current_packet = nullptr;
@@ -150,11 +150,11 @@ AV::Utils::AvException App::Run() {
 	return AV::Utils::AvError::NOERROR;
 }
 
-AppResult App::Create(const std::string &ndi_source_name, const std::string &video_file_path) {
+SoftwareAppResult SoftwareApp::Create(const std::string &ndi_source_name, const std::string &video_file_path) {
 	AV::Utils::AvException err;
 
 	try {
-		return {std::shared_ptr<App>(new App(ndi_source_name, video_file_path)), AV::Utils::AvError::NOERROR};
+		return {std::shared_ptr<SoftwareApp>(new SoftwareApp(ndi_source_name, video_file_path)), AV::Utils::AvError::NOERROR};
 	} catch(AV::Utils::AvException e) {
 		err = e;
 		DEBUG("Error while creating app: %s", e.what());
@@ -163,14 +163,14 @@ AppResult App::Create(const std::string &ndi_source_name, const std::string &vid
 	return {nullptr, err};
 }
 
-App::App(const std::string &ndi_source_name, const std::string &video_file_path) : _ndi_source_name(ndi_source_name), _video_file_path(video_file_path) {
+SoftwareApp::SoftwareApp(const std::string &ndi_source_name, const std::string &video_file_path) : _ndi_source_name(ndi_source_name), _video_file_path(video_file_path) {
 	auto err = _Initialize();
 	if(err != AV::Utils::AvError::NOERROR) {
 		throw err;
 	}
 }
 
-AV::Utils::AvError App::_Initialize() {
+AV::Utils::AvError SoftwareApp::_Initialize() {
 	// Create the demuxer
 	auto [demuxer, demuxer_err] = AV::Utils::Demuxer::Create(_video_file_path);
 	if(demuxer_err.code() != (int)AV::Utils::AvError::NOERROR) {

@@ -17,6 +17,7 @@
 #include "audioresampler.hpp"
 #include "frametimer.hpp"
 #include "vaapidecoder.hpp"
+#include "app.hpp"
 
 extern "C" {
 	#include <libavcodec/codec_par.h>
@@ -29,7 +30,7 @@ extern "C" {
 class VAAPIApp;
 using VAAPIAppResult = std::pair<std::shared_ptr<VAAPIApp>, AV::Utils::AvException>;
 
-class VAAPIApp {
+class VAAPIApp : public App {
 private:
 	VAAPIApp(const std::string &ndi_source_name, const std::string &video_file_path);
 	AV::Utils::AvError _Initialize();

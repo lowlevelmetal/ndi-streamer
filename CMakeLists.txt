@@ -34,7 +34,7 @@ set(SOURCES
     src/frametimer.cpp
     src/frame.cpp
     src/asyncndisource.cpp
-    src/app.cpp
+    src/softwareapp.cpp
     src/vaapiapp.cpp
     src/cudaapp.cpp
     src/simplefilter.cpp

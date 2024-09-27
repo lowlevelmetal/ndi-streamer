@@ -16,9 +16,10 @@
 
 // Local includes
 #include "macro.hpp"
-#include "app.hpp"
+#include "softwareapp.hpp"
 #include "vaapiapp.hpp"
 #include "cudaapp.hpp"
+#include "app.hpp"
 
 typedef struct CommandLineArguments {
     std::string videofile;
@@ -57,6 +58,7 @@ ERRORTYPE ParseCommandLineArguments(COMMANDLINEARGUMENTS &cmdlineargs, int argc,
     }
 
     DEBUG("Video file --> %s", cmdlineargs.videofile.c_str());
+    DEBUG("HW Type --> %s", cmdlineargs.hwtype.c_str());
 
     if (cmdlineargs.videofile == "") {
         ERROR("videofile required");
@@ -85,42 +87,34 @@ int main(int argc, char **argv) {
     PRINT("Video File: %s", cmdlineargs.videofile.c_str());
     PRINT("HW Type: %s", cmdlineargs.hwtype.c_str());
 
+    std::shared_ptr<App> app;
+    AV::Utils::AvException err;
+
     // Create the application
     if(cmdlineargs.hwtype == "software") {
-        auto [app, err] = App::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-        if (err.code()) {
-            FATAL("Error creating application: %s", err.what());
-        }
-
-        // Run the application
-        err = app->Run();
-        if (err.code()) {
-            FATAL("Error running application: %s", err.what());
-        }
+        auto [temp_app, temp_err] = SoftwareApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+        app = temp_app;
+        err = temp_err;
     } else if(cmdlineargs.hwtype == "vaapi") {
-        auto [app, err] = VAAPIApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
-        if (err.code()) {
-            FATAL("Error creating application: %s", err.what());
-        }
-
-        // Run the application
-        err = app->Run();
-        if (err.code()) {
-            FATAL("Error running application: %s", err.what());
-        }
+        auto [temp_app, temp_err] = VAAPIApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+        app = temp_app;
+        err = temp_err;
     } else if(cmdlineargs.hwtype == "cuda") {
-        auto [app, err] = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+        auto [temp_app, temp_err] = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
+        app = temp_app;
+        err = temp_err;
+    }
+
+    if(app != nullptr) {
         if (err.code()) {
             FATAL("Error creating application: %s", err.what());
         }
 
-        // Run the application
-        err = app->Run();
-        if (err.code()) {
+        auto err = app->Run();
+        if(err.code()) {
             FATAL("Error running application: %s", err.what());
         }
     }
-
 
     fflush(stdout);
     fflush(stderr);
