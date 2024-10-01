@@ -58,6 +58,7 @@ ERRORTYPE ParseCommandLineArguments(COMMANDLINEARGUMENTS &cmdlineargs, int argc,
     }
 
     DEBUG("Video file --> %s", cmdlineargs.videofile.c_str());
+    DEBUG("NDI Source --> %s", cmdlineargs.ndisource.c_str());
     DEBUG("HW Type --> %s", cmdlineargs.hwtype.c_str());
 
     if (cmdlineargs.videofile == "") {
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     PRINT("Video File: %s", cmdlineargs.videofile.c_str());
     PRINT("HW Type: %s", cmdlineargs.hwtype.c_str());
 
-    std::shared_ptr<App> app;
+    std::shared_ptr<App> app(nullptr);
     AV::Utils::AvException err;
 
     // Create the application
@@ -99,11 +100,11 @@ int main(int argc, char **argv) {
         std::tie(app, err) = CudaApp::Create(cmdlineargs.ndisource, cmdlineargs.videofile);
     }
 
-    if(app != nullptr) {
-        if (err.code()) {
-            FATAL("Error creating application: %s", err.what());
-        }
+    if (err.code()) {
+        FATAL("Error creating application: %s", err.what());
+    }
 
+    if(app != nullptr) {
         auto err = app->Run();
         if(err.code()) {
             FATAL("Error running application: %s", err.what());

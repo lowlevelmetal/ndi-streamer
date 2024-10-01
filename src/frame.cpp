@@ -47,7 +47,6 @@ AVFrame *CopyFrame(AVFrame *frame) {
 uint8_t *ConvertNV12BufferedToNV12(const AVFrame *frame) {
     FUNCTION_CALL_DEBUG();
 
-
     // Calculate correct buffer size
     uint target_y_size = frame->width * frame->height;
     uint target_uv_size = (frame->width / 2) * (frame->height / 2) * 2; // Each UV plane is half width and height, but interleaved so * 2
@@ -82,28 +81,28 @@ void PrintPictType(AVPictureType type) {
 
     switch (type) {
         case AV_PICTURE_TYPE_I:
-            DEBUG("Frame Type: I");
+            PRINT("Frame Type: I");
             break;
         case AV_PICTURE_TYPE_P:
-            DEBUG("Frame Type: P");
+            PRINT("Frame Type: P");
             break;
         case AV_PICTURE_TYPE_B:
-            DEBUG("Frame Type: B");
+            PRINT("Frame Type: B");
             break;
         case AV_PICTURE_TYPE_S:
-            DEBUG("Frame Type: S");
+            PRINT("Frame Type: S");
             break;
         case AV_PICTURE_TYPE_SI:
-            DEBUG("Frame Type: SI");
+            PRINT("Frame Type: SI");
             break;
         case AV_PICTURE_TYPE_NONE:
-            DEBUG("Frame Type: NONE");
+            PRINT("Frame Type: NONE");
             break;
         case AV_PICTURE_TYPE_SP:
-            DEBUG("Frame Type: SP");
+            PRINT("Frame Type: SP");
             break;
         default:
-            DEBUG("Frame Type: %d", type);
+            PRINT("Unkown Frame Type: %d", type);
             break;
     }
 }

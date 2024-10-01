@@ -54,7 +54,7 @@ AvException FrameTimer::AddFrame(AVFrame *frame) {
 
     // Check if frame has valid time_base and pts
     if (frame->pts == AV_NOPTS_VALUE || frame->time_base.den == 0) {
-        DEBUG("Invalid Frame Info: PTS: %ld, Time Base: %d/%d", frame->pts, frame->time_base.num, frame->time_base.den);
+        PRINT("Invalid Frame Info: PTS: %ld, Time Base: %d/%d", frame->pts, frame->time_base.num, frame->time_base.den);
 
         // What type of frame is this?
         PrintPictType(frame->pict_type);
