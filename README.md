@@ -32,6 +32,23 @@ built for servers, signage players and test rigs, with no GUI and no X server ne
 - **Well behaved.** Ctrl+C or SIGTERM stops cleanly, errors are reported clearly, exit codes are
   meaningful, and `--stats` gives periodic statistics.
 
+## Download
+
+Each [release](https://github.com/lowlevelmetal/ndi-streamer/releases) has a prebuilt binary for
+x86-64 Linux that runs on any distribution with glibc 2.31 or newer (Ubuntu 20.04, Debian 11,
+RHEL 9, Fedora, Arch and later):
+
+```sh
+tar -xzf ndistreamer-*-linux-x86_64.tar.gz
+./ndistreamer-*-linux-x86_64/ndistreamer --version
+```
+
+FFmpeg is built in, so all you need is the NDI runtime (see [Installing the NDI
+runtime](#installing-the-ndi-runtime)). The binary decodes all common codecs (AV1 included), supports
+VAAPI and NVDEC hardware decoding, and reads files, network streams (including HTTPS) and V4L2
+devices. X11 screen capture and ALSA/PulseAudio input need the system's libraries; for those, build
+from source.
+
 ## Requirements
 
 - Linux on x86-64 or ARM
@@ -63,6 +80,22 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 sudo cmake --install build        # optional: installs to /usr/local/bin/ndistreamer
 ```
+
+### Portable static build
+
+To build the same kind of binary as the releases, compile the static dependencies once, then point
+CMake at them:
+
+```sh
+packaging/build-static-deps.sh ~/ndistreamer-deps   # needs meson, ninja, nasm and cmake
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DNDISTREAMER_STATIC=ON \
+      -DCMAKE_PREFIX_PATH=~/ndistreamer-deps
+cmake --build build
+packaging/package.sh build/ndistreamer ~/ndistreamer-deps dist   # optional: release archive
+```
+
+The binary links only against glibc, so build on the oldest distribution you want to support. The
+releases are built on Ubuntu 20.04.
 
 ### Installing the NDI runtime
 

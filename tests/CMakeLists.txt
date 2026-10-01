@@ -86,7 +86,7 @@ if(NDISDK_FOUND)
     # Compiling this verifies src/ndi/abi.hpp against the official headers.
     add_executable(ndi_abi_test ndi_abi_test.cpp)
     target_include_directories(ndi_abi_test PRIVATE ${PROJECT_SOURCE_DIR}/src ${NDISDK_INCLUDE_DIR})
-    target_link_libraries(ndi_abi_test PRIVATE PkgConfig::FFMPEG)
+    target_link_libraries(ndi_abi_test PRIVATE ${NDISTREAMER_FFMPEG})
     add_test(NAME ndi_abi COMMAND ndi_abi_test)
 
     add_executable(ndi_receiver e2e/ndi_receiver.cpp)

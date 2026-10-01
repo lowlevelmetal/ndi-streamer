@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.1
+
+- **Prebuilt portable binary.** Releases now include `ndistreamer-VERSION-linux-x86_64.tar.gz`. It
+  runs on any x86-64 Linux with glibc 2.31 or newer (Ubuntu 20.04, Debian 11, RHEL 9, Fedora, Arch
+  and later). FFmpeg 9.0 and its libraries are linked in statically, with software decoding of all
+  common codecs including AV1, VAAPI and NVDEC hardware decoding, HTTPS, and V4L2 capture. CI
+  checks that it runs on Ubuntu, Debian, Rocky Linux, Fedora and Arch.
+- New `-DNDISTREAMER_STATIC=ON` build option and `packaging/` scripts to produce the portable
+  build yourself.
+- HTTPS inputs work with FFmpeg builds that use Mbed TLS: the system CA bundle is found
+  automatically.
+
 ## 2.0.0
 
 A ground-up rewrite. The goal is unchanged (stream media as an NDI source from Linux), but the
