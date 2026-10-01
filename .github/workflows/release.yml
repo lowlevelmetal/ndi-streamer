@@ -34,7 +34,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends software-properties-common gpg-agent ca-certificates \
-            curl git xz-utils bzip2 make nasm ninja-build pkg-config python3-pip binutils file
+            curl git xz-utils bzip2 make ninja-build pkg-config python3-pip binutils file
           add-apt-repository -y ppa:ubuntu-toolchain-r/test
           apt-get update
           apt-get install -y --no-install-recommends gcc-13 g++-13

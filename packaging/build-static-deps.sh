@@ -4,7 +4,8 @@
 #
 # Usage: packaging/build-static-deps.sh PREFIX
 #
-# Needs a C compiler, make, cmake, meson, ninja, nasm, pkg-config, curl and tar. Sources are
+# Needs a C compiler, make, cmake, meson, ninja, pkg-config, curl and tar. A recent nasm (which
+# FFmpeg's assembly requires) is built along the way. Sources are
 # downloaded into $NDISTREAMER_DOWNLOAD_DIR (default: PREFIX/src) and verified against SHA-256 sums.
 # License texts and a manifest of what was built go to PREFIX/share/ndistreamer-deps.
 #
@@ -26,8 +27,9 @@ build=$prefix/build
 share=$prefix/share/ndistreamer-deps
 jobs=$(nproc)
 
-# name version sha256 url license-file(s, relative to the source tree)
+# name version sha256 url
 packages=(
+    "nasm 2.16.03 1412a1c760bbd05db026b6c0d1657affd6631cd0a63cddb6f73cc6d4aa616148 https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/nasm-2.16.03.tar.xz"
     "zlib 1.3.2 d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3 https://zlib.net/zlib-1.3.2.tar.xz"
     "nv-codec-headers 11.1.5.3 2974b91062197e0527dffa3aadd8fe3bfa6681ae45f5ff9181bc0ca6479abd59 https://github.com/FFmpeg/nv-codec-headers/releases/download/n11.1.5.3/nv-codec-headers-11.1.5.3.tar.gz"
     "libdrm 2.4.134 ac5e74d157830eb8bee44c6a6bf3ad49774ef0dd2a72bdad74a8f20308b52a95 https://dri.freedesktop.org/libdrm/libdrm-2.4.134.tar.xz"
@@ -53,7 +55,8 @@ log() {
     echo "==> $*"
 }
 
-# fetch NAME: download (if needed), verify and unpack a package; prints its source directory.
+# fetch NAME [tool]: download (if needed), verify and unpack a package; prints its source directory.
+# Packages that end up in the binary are recorded in the manifest; build tools are not.
 fetch() {
     local entry name version sha url file dir
     for entry in "${packages[@]}"; do
@@ -72,7 +75,9 @@ fetch() {
     rm -rf "$dir"
     mkdir -p "$dir"
     tar -xf "$file" -C "$dir" --strip-components=1
-    printf '%s\t%s\t%s\t%s\n' "$name" "$version" "$url" "$sha" >> "$share/manifest.tsv"
+    if [ "${2:-}" != tool ]; then
+        printf '%s\t%s\t%s\t%s\n' "$name" "$version" "$url" "$sha" >> "$share/manifest.tsv"
+    fi
     echo "$dir"
 }
 
@@ -82,6 +87,14 @@ meson_static() {
     meson setup "$src/_build" "$src" --prefix="$prefix" --libdir=lib --buildtype=release \
         -Ddefault_library=static "$@"
     meson install -C "$src/_build"
+}
+
+# FFmpeg's assembly needs a newer nasm than many distributions ship.
+build_nasm() {
+    local src
+    src=$(fetch nasm tool)
+    (cd "$src" && ./configure --prefix="$prefix/tools" && make -j"$jobs" nasm ndisasm && make install)
+    export PATH=$prefix/tools/bin:$PATH
 }
 
 build_zlib() {
@@ -158,6 +171,7 @@ build_ffmpeg() {
     printf '%s\n' "${flags[@]:4}" > "$share/ffmpeg-configuration.txt"
 }
 
+build_nasm
 build_zlib
 build_nv_codec_headers
 build_libdrm
