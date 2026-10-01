@@ -9,6 +9,7 @@
 #include "frames.hpp"
 
 #include <functional>
+#include <optional>
 
 namespace ndistreamer::av {
 
@@ -23,6 +24,9 @@ struct AudioProcessorConfig {
  *
  * Most decoders (AAC, MP3, AC-3, Opus...) already output planar float, in which case samples are only
  * copied into one contiguous block. All source channels are kept unless a channel count is requested.
+ *
+ * One block is held back so that, if the next block starts before it ends, its tail can be trimmed.
+ * That happens at loop points with decoders that output encoder padding past the end of the media.
  */
 class AudioProcessor {
 public:
@@ -37,11 +41,12 @@ public:
     void Process(const AVFrame *frame, const Sink &sink);
 
     /**
-     * @brief Emit samples still buffered in the resampler at the end of the stream.
+     * @brief Emit everything still held back, including samples buffered in the resampler.
      */
     void Flush(const Sink &sink);
 
 private:
+    bool Emit(AudioFrame &&out, const Sink &sink);
     bool NeedsReconfigure(const AVFrame *frame) const;
     void Configure(const AVFrame *frame);
     bool Resample(const uint8_t *const *input, int input_samples, int64_t input_pts_us, const Sink &sink);
@@ -59,6 +64,7 @@ private:
     int m_out_rate = 0;
 
     int64_t m_next_in_us = 0;
+    std::optional<AudioFrame> m_held; ///< The most recent block, not yet emitted.
     bool m_reported = false;
 };
 
