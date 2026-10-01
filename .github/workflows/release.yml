@@ -106,7 +106,7 @@ jobs:
         include:
           - image: ubuntu:20.04
             setup: apt-get update && apt-get install -y --no-install-recommends ca-certificates
-          - image: debian:11
+          - image: debian:12
             setup: apt-get update && apt-get install -y --no-install-recommends ca-certificates
           - image: rockylinux:9
             setup: "true"
