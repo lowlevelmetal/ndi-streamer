@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC release
+            cxx: g++
+            build_type: Release
+            sanitize: OFF
+          - name: Clang release
+            cxx: clang++
+            build_type: Release
+            sanitize: OFF
+          - name: GCC ASan+UBSan
+            cxx: g++
+            build_type: Debug
+            sanitize: ON
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build pkg-config g++ clang libgtest-dev ffmpeg \
+            libavformat-dev libavcodec-dev libavfilter-dev libavdevice-dev \
+            libavutil-dev libswscale-dev libswresample-dev
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DNDISTREAMER_SANITIZE=${{ matrix.sanitize }}
+          -DNDISTREAMER_WERROR=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 120
