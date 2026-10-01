@@ -1,3 +1,0 @@
-TODO List
-	- Write a fragment shader that converts nv12 to uyvy. The GPU is always ahead of the NDI functions, so lets make it easier on NDI
-	- Cleanup the app classes
