@@ -1,0 +1,166 @@
+name: Release binaries
+
+# Builds the portable Linux binary, checks that it runs on several distributions, and attaches it
+# to the GitHub release. Pull requests that touch the packaging build and test it without publishing.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to attach the binary to (leave empty to only build)"
+        required: false
+  pull_request:
+    paths:
+      - "packaging/**"
+      - ".github/workflows/release.yml"
+      - "CMakeLists.txt"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build portable x86_64 binary
+    runs-on: ubuntu-24.04
+    # An old glibc (2.31) as the baseline: the binary runs on Ubuntu 20.04, Debian 11, RHEL 9 and newer.
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      DEPS: /opt/ndistreamer-deps
+    steps:
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends software-properties-common gpg-agent ca-certificates \
+            curl git xz-utils bzip2 make nasm ninja-build pkg-config python3-pip binutils file
+          add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          apt-get update
+          apt-get install -y --no-install-recommends gcc-13 g++-13
+          update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-13 100
+          update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-13 100
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+          pip3 install --no-cache-dir meson cmake
+
+      - uses: actions/checkout@v4
+
+      - name: Cache static dependencies
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/ndistreamer-deps
+          key: static-deps-focal-x86_64-${{ hashFiles('packaging/build-static-deps.sh') }}
+
+      - name: Build static dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: packaging/build-static-deps.sh "$DEPS"
+
+      - name: Build GoogleTest
+        run: |
+          git clone --quiet --depth 1 --branch v1.15.2 https://github.com/google/googletest /tmp/googletest
+          cmake -S /tmp/googletest -B /tmp/googletest/build -G Ninja -DCMAKE_INSTALL_PREFIX=/opt/googletest
+          cmake --build /tmp/googletest/build
+          cmake --install /tmp/googletest/build
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DNDISTREAMER_STATIC=ON -DNDISTREAMER_WERROR=ON
+          "-DCMAKE_PREFIX_PATH=$DEPS;/opt/googletest"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 120
+
+      - name: Package
+        run: packaging/package.sh build/ndistreamer "$DEPS" dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: dist/
+
+      # The fake NDI runtime and a clip let the smoke tests stream without the real NDI runtime.
+      - name: Collect smoke test files
+        run: |
+          mkdir -p smoke
+          cp build/tests/fake_ndi/libndi.so.6 build/tests/media/av.mp4 smoke/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-files
+          path: smoke/
+
+  smoke-test:
+    name: Run on ${{ matrix.image }}
+    needs: build
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:20.04
+            setup: apt-get update && apt-get install -y --no-install-recommends ca-certificates
+          - image: debian:11
+            setup: apt-get update && apt-get install -y --no-install-recommends ca-certificates
+          - image: rockylinux:9
+            setup: "true"
+          - image: fedora:latest
+            setup: "true"
+          - image: archlinux:latest
+            setup: "true"
+    steps:
+      - name: Prepare
+        run: ${{ matrix.setup }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-test-files
+          path: smoke
+
+      - name: Run
+        shell: bash
+        run: |
+          set -euxo pipefail
+          tar -xzf dist/ndistreamer-*-linux-x86_64.tar.gz
+          bin=$(echo ndistreamer-*-linux-x86_64/ndistreamer)
+          "$bin" --version
+
+          # Without the NDI runtime it must fail cleanly and say why.
+          if "$bin" -i smoke/av.mp4 --ndi-lib /nonexistent/libndi.so.6 2> err.txt; then exit 1; fi
+          grep "cannot load the NDI runtime" err.txt
+
+          # Decode and send a local file, then a file over HTTPS (system CA bundle detection).
+          export FAKE_NDI_LOG=$PWD/sent.log
+          "$bin" -i smoke/av.mp4 --ndi-lib smoke/libndi.so.6 --no-pacing
+          test "$(grep -c '^video' sent.log)" -eq 50
+          "$bin" -i https://castus-public-resources.s3.us-west-2.amazonaws.com/content/videos/mp4/rickroll.mp4 \
+            --ndi-lib smoke/libndi.so.6 --no-pacing
+          test "$(grep -c '^video' sent.log)" -gt 100
+
+  publish:
+    name: Attach to release
+    needs: smoke-test
+    if: github.event_name == 'release' || inputs.tag != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: dist
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"

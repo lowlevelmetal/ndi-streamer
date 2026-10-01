@@ -8,10 +8,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <format>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+
+#include <unistd.h>
 
 extern "C" {
 #include <libavdevice/avdevice.h>
@@ -26,6 +29,30 @@ namespace {
 
 const char *MediaTypeName(AVMediaType type) {
     return type == AVMEDIA_TYPE_VIDEO ? "a video" : "an audio";
+}
+
+// FFmpeg built with Mbed TLS (as the portable release binary is) has no default certificate store,
+// so it is pointed at the system's CA bundle unless the user chose one with -o ca_file=...
+const char *SystemCaBundle() {
+    static const char *const kBundles[] = {
+        "/etc/ssl/certs/ca-certificates.crt",                // Debian, Ubuntu, Arch, Alpine, Gentoo
+        "/etc/pki/tls/certs/ca-bundle.crt",                  // Fedora, RHEL
+        "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", // Fedora, RHEL
+        "/etc/ssl/ca-bundle.pem",                            // openSUSE
+        "/etc/ssl/cert.pem",
+    };
+    static const char *const bundle = [] {
+        for (const char *path : kBundles) {
+            if (access(path, R_OK) == 0) return path;
+        }
+        return static_cast<const char *>(nullptr);
+    }();
+    return bundle;
+}
+
+bool UsesMbedTls() {
+    static const bool uses = std::strstr(avformat_configuration(), "--enable-mbedtls") != nullptr;
+    return uses;
 }
 
 std::string DescribeCodec(const AVCodecParameters *par) {
@@ -70,6 +97,13 @@ void MediaInput::Open(const InputConfig &config) {
     for (const auto &[key, value] : config.options) {
         av_dict_set(&options, key.c_str(), value.c_str(), 0);
     }
+    bool default_ca_file = false;
+    if (UsesMbedTls() && !av_dict_get(options, "ca_file", nullptr, 0)) {
+        if (const char *bundle = SystemCaBundle()) {
+            av_dict_set(&options, "ca_file", bundle, 0);
+            default_ca_file = true;
+        }
+    }
 
     // On failure avformat_open_input frees the context itself.
     int ret = avformat_open_input(&ctx, config.url.c_str(), format, &options);
@@ -81,6 +115,7 @@ void MediaInput::Open(const InputConfig &config) {
 
     const AVDictionaryEntry *unused = nullptr;
     while ((unused = av_dict_iterate(options, unused))) {
+        if (default_ca_file && std::strcmp(unused->key, "ca_file") == 0) continue; // only used for TLS
         log::Warn("input option '{}' was not recognized", unused->key);
     }
     av_dict_free(&options);
