@@ -121,3 +121,10 @@ TEST(MediaInput, UnknownInputOptionsAreNotFatal) {
     config.options.emplace_back("no_such_option", "1");
     EXPECT_NO_THROW(av::MediaInput(config, std::stop_token{}));
 }
+
+TEST(MediaInput, OpensLocalFilesWithoutWarnings) {
+    REQUIRE_MEDIA("av.mp4");
+    testing::internal::CaptureStderr();
+    av::MediaInput input(Config("av.mp4"), std::stop_token{});
+    EXPECT_EQ(testing::internal::GetCapturedStderr(), "");
+}

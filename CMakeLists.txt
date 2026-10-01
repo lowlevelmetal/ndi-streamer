@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(ndistreamer
-    VERSION 2.0.0
+    VERSION 2.0.1
     DESCRIPTION "Stream any media file, network stream or capture device as an NDI source"
     HOMEPAGE_URL "https://github.com/lowlevelmetal/ndi-streamer"
     LANGUAGES CXX)
@@ -20,6 +20,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 option(NDISTREAMER_BUILD_TESTS "Build the test suite (requires GoogleTest)" ${PROJECT_IS_TOP_LEVEL})
 option(NDISTREAMER_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(NDISTREAMER_WERROR "Treat compiler warnings as errors" OFF)
+option(NDISTREAMER_STATIC
+    "Link FFmpeg and the C++ runtime statically for a portable binary (see packaging/build-static-deps.sh)" OFF)
 set(NDI_SDK_DIR "" CACHE PATH
     "Optional NDI SDK root. Not needed to build; enables ABI verification and end-to-end tests")
 
@@ -36,6 +38,21 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libswscale>=7
     libswresample>=4)
 find_package(Threads REQUIRED)
+
+if(NDISTREAMER_STATIC)
+    # Static FFmpeg, e.g. from packaging/build-static-deps.sh. Only glibc stays dynamic: the NDI
+    # runtime is loaded with dlopen, which a fully static executable cannot do.
+    # libatomic is a GCC runtime library that not every system has, so link its archive too.
+    list(TRANSFORM FFMPEG_STATIC_LDFLAGS REPLACE "^-latomic$" "-l:libatomic.a")
+    add_library(ndistreamer_ffmpeg INTERFACE)
+    target_include_directories(ndistreamer_ffmpeg SYSTEM INTERFACE ${FFMPEG_STATIC_INCLUDE_DIRS})
+    target_compile_options(ndistreamer_ffmpeg INTERFACE ${FFMPEG_STATIC_CFLAGS_OTHER})
+    target_link_libraries(ndistreamer_ffmpeg INTERFACE ${FFMPEG_STATIC_LDFLAGS})
+    set(NDISTREAMER_FFMPEG ndistreamer_ffmpeg)
+    add_link_options(-static-libstdc++ -static-libgcc)
+else()
+    set(NDISTREAMER_FFMPEG PkgConfig::FFMPEG)
+endif()
 
 # Newer FFmpeg lets filter sources carry color properties.
 include(CheckCXXSourceCompiles)
@@ -83,7 +100,7 @@ target_include_directories(ndistreamer_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(ndistreamer_core
-    PUBLIC PkgConfig::FFMPEG Threads::Threads ${CMAKE_DL_LIBS}
+    PUBLIC ${NDISTREAMER_FFMPEG} Threads::Threads ${CMAKE_DL_LIBS}
     PRIVATE ndistreamer_warnings)
 target_compile_definitions(ndistreamer_core PRIVATE
     $<$<BOOL:${NDISTREAMER_HAVE_BUFFERSRC_COLOR}>:NDISTREAMER_HAVE_BUFFERSRC_COLOR>)
