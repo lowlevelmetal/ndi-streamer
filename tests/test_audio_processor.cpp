@@ -56,6 +56,13 @@ std::vector<AudioFrame> Flush(AudioProcessor &processor) {
     return out;
 }
 
+// The processor holds back its latest block; flushing releases it.
+std::vector<AudioFrame> ProcessAndFlush(AudioProcessor &processor, const AVFrame *frame) {
+    auto out = Process(processor, frame);
+    for (auto &f : Flush(processor)) out.push_back(std::move(f));
+    return out;
+}
+
 AudioProcessorConfig Config(int rate = 0, int channels = 0, AVRational time_base = {1, 48000}) {
     AudioProcessorConfig config;
     config.sample_rate = rate;
@@ -71,7 +78,7 @@ TEST(AudioProcessor, PacksPlanarFloatWithoutConversion) {
     auto frame = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 2, 1024, 480);
     FillPlanarFloat(frame.get(), {0.25f, -0.5f});
 
-    auto out = Process(processor, frame.get());
+    auto out = ProcessAndFlush(processor, frame.get());
     ASSERT_EQ(out.size(), 1u);
     const AudioFrame &f = out[0];
     EXPECT_EQ(f.sample_rate, 48000);
@@ -94,7 +101,7 @@ TEST(AudioProcessor, ConvertsInterleavedS16) {
         samples[2 * i + 1] = -16384;
     }
 
-    auto out = Process(processor, frame.get());
+    auto out = ProcessAndFlush(processor, frame.get());
     ASSERT_EQ(out.size(), 1u);
     const AudioFrame &f = out[0];
     ASSERT_EQ(f.samples_per_channel, 256);
@@ -124,7 +131,7 @@ TEST(AudioProcessor, RemixesToRequestedChannelCount) {
     auto frame = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 6, 512, 0);
     FillPlanarFloat(frame.get(), {0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f});
 
-    auto out = Process(processor, frame.get());
+    auto out = ProcessAndFlush(processor, frame.get());
     ASSERT_EQ(out.size(), 1u);
     EXPECT_EQ(out[0].channels, 2);
     EXPECT_GT(out[0].samples[100], 0.0f);
@@ -133,7 +140,7 @@ TEST(AudioProcessor, RemixesToRequestedChannelCount) {
 TEST(AudioProcessor, KeepsAllSourceChannels) {
     AudioProcessor processor(Config());
     auto frame = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 8, 128, 0);
-    auto out = Process(processor, frame.get());
+    auto out = ProcessAndFlush(processor, frame.get());
     ASSERT_EQ(out.size(), 1u);
     EXPECT_EQ(out[0].channels, 8);
 }
@@ -145,6 +152,7 @@ TEST(AudioProcessor, FramesWithoutTimestampsAreSequential) {
         auto frame = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 2, 1024, AV_NOPTS_VALUE);
         for (auto &f : Process(processor, frame.get())) pts.push_back(f.pts_us);
     }
+    for (auto &f : Flush(processor)) pts.push_back(f.pts_us);
     EXPECT_EQ(pts, (std::vector<int64_t>{0, 21333, 42666}));
 }
 
@@ -154,8 +162,12 @@ TEST(AudioProcessor, AdaptsWhenInputFormatChanges) {
     auto fltp = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 44100, 1, 256, 256);
     FillPlanarFloat(fltp.get(), {0.75f});
 
-    ASSERT_EQ(Process(processor, s16.get()).size(), 1u);
-    auto out = Process(processor, fltp.get());
+    EXPECT_TRUE(Process(processor, s16.get()).empty()); // held back
+    auto first = Process(processor, fltp.get());         // the change releases the s16 block
+    ASSERT_EQ(first.size(), 1u);
+    EXPECT_EQ(first[0].channels, 2);
+
+    auto out = Flush(processor);
     ASSERT_EQ(out.size(), 1u);
     EXPECT_EQ(out[0].channels, 1);
     EXPECT_EQ(out[0].sample_rate, 44100);
@@ -191,4 +203,38 @@ TEST(AudioProcessor, KeepsBufferedSamplesWhenInputChanges) {
     for (auto &f : Flush(processor)) produced += f.samples_per_channel;
 
     EXPECT_NEAR(static_cast<double>(produced), 2048.0 * 48000 / 44100, 4);
+}
+
+TEST(AudioProcessor, TrimsTailThatOverlapsTheNextBlock) {
+    // Like a loop point where the decoder emitted 256 samples of encoder padding past the end.
+    AudioProcessor processor(Config());
+    auto padded = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 1, 1024, 0);
+    auto next = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 1, 1024, 768);
+    FillPlanarFloat(padded.get(), {0.25f});
+    FillPlanarFloat(next.get(), {0.5f});
+
+    auto out = Process(processor, padded.get());
+    for (auto &f : Process(processor, next.get())) out.push_back(std::move(f));
+    for (auto &f : Flush(processor)) out.push_back(std::move(f));
+
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_EQ(out[0].samples_per_channel, 768);
+    EXPECT_EQ(out[1].pts_us, 16000);
+    EXPECT_EQ(out[1].samples_per_channel, 1024);
+    EXPECT_FLOAT_EQ(out[1].samples[0], 0.5f);
+}
+
+TEST(AudioProcessor, LeavesTimestampDiscontinuitiesAlone) {
+    // A large backward jump (e.g. a live encoder restarting) is not an overlap to trim.
+    AudioProcessor processor(Config());
+    auto later = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 1, 1024, 480000);
+    auto earlier = MakeAudioFrame(AV_SAMPLE_FMT_FLTP, 48000, 1, 1024, 0);
+
+    auto out = Process(processor, later.get());
+    for (auto &f : Process(processor, earlier.get())) out.push_back(std::move(f));
+    for (auto &f : Flush(processor)) out.push_back(std::move(f));
+
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_EQ(out[0].samples_per_channel, 1024);
+    EXPECT_EQ(out[1].samples_per_channel, 1024);
 }
